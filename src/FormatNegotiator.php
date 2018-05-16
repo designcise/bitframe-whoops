@@ -44,7 +44,7 @@ class FormatNegotiator
             $acceptType = $acceptTypes[0];
 
             // as many formats may match for a given Accept header, 
-			// look for the one that fits the best
+            // look for the one that fits the best
             $counters = [];
             foreach (self::$formats as $format => $values) {
                 foreach ($values as $value) {
