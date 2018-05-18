@@ -1,6 +1,6 @@
 {
     "name": "designcise/bitframe-whoops",
-	"version": "1.0.0",
+    "version": "1.0.0",
     "type": "library",
     "description": "Whoops error handler middleware for BitFrame microframework",
     "license": "MIT",
@@ -12,11 +12,12 @@
     ],
     "require": {
         "php": ">=7.1.0",
-		"filp/whoops": "~2.1",
-		"psr/http-server-handler": "~1.0",
-		"psr/http-server-middleware": "~1.0",
-		"symfony/var-dumper": "^2.6 || ^3.0",
-		"zendframework/zend-diactoros": "^1.1.0"
+        "designcise/bitframe": "^1.0.0",
+        "filp/whoops": "~2.1",
+        "psr/http-server-handler": "~1.0",
+        "psr/http-server-middleware": "~1.0",
+        "symfony/var-dumper": "^2.6 || ^3.0",
+        "zendframework/zend-diactoros": "^1.1.0"
     },
     "require-dev": {
         "phpunit/phpunit": "^6.4"
