@@ -9,7 +9,7 @@
  * @author    Franz Liedke
  * @copyright Copyright (c) 2015-2017 Franz Liedke
  *
- * @license   https://github.com/designcise/bitframe/blob/master/LICENSE.md MIT License
+ * @license   https://github.com/designcise/bitframe-whoops/blob/master/LICENSE.md MIT License
  */
 
 namespace BitFrame\ErrorHandler;
@@ -18,9 +18,11 @@ use \Psr\Http\Message\{ServerRequestInterface, ResponseInterface};
 use \Psr\Http\Server\{RequestHandlerInterface, MiddlewareInterface};
 
 use \Whoops\Run;
+use \Whoops\Util\Misc;
 use \Whoops\Handler\{PlainTextHandler, JsonResponseHandler, XmlResponseHandler, PrettyPageHandler};
 
 use BitFrame\Delegate\CallableMiddlewareTrait;
+use BitFrame\ErrorHandler\Handler\JsonpResponseHandler;
 
 /**
  * Whoops error handler middleware to handle application
@@ -139,13 +141,23 @@ class WhoopsErrorHandler implements MiddlewareInterface
             // select appropriate handler as per the requested format
             $format = ((PHP_SAPI === 'cli')) ? 'text' : (
                 ($format === 'auto') ? (
-                    (\Whoops\Util\Misc::isAjaxRequest()) ? 'json' : FormatNegotiator::getPreferredFormat($request)
+                    (Misc::isAjaxRequest()) ? 'json' : FormatNegotiator::getPreferredFormat($request)
                 ) : $format
             );
 
             switch ($format) {
                 case 'json':
                     $handler = new JsonResponseHandler;
+                    
+                    // is a jsonp request?
+                    if (
+                        $request->getMethod() === 'GET' && 
+                        ! empty($callback = $request->getQueryParam('callback', ''))
+                    ) {
+                        // use the custom jsonp response handler
+                        $handler = new JsonpResponseHandler($callback);
+                    }
+                    
                     $handler->addTraceToOutput($showTrace);
                     $handler->setJsonApi(true);
                 break;

@@ -9,7 +9,7 @@
  * @author    Franz Liedke
  * @copyright Copyright (c) 2015-2017 Franz Liedke
  *
- * @license   https://github.com/designcise/bitframe/blob/master/LICENSE.md MIT License
+ * @license   https://github.com/designcise/bitframe-whoops/blob/master/LICENSE.md MIT License
  */
 
 namespace BitFrame\ErrorHandler;

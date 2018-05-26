@@ -1,6 +1,7 @@
 Portions of the "BitFrame Whoops Middleware" incorporates the work by (as provided under the MIT lincense):
 
 * Copyright (c) 2015-2017 Franz Liedke
+* Copyright (c) 2013-2018 Filipe Dobreira (http://github.com/filp)
 
 All other copyright for the "BitFrame Whoops Middleware" are held by:
 
