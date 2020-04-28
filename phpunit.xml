@@ -1,18 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<phpunit bootstrap="vendor/autoload.php"
-		 backupGlobals="false"
+<phpunit backupGlobals="false"
          backupStaticAttributes="false"
          colors="true"
          convertErrorsToExceptions="true"
          convertNoticesToExceptions="true"
          convertWarningsToExceptions="true"
          processIsolation="false"
-         syntaxCheck="false"
-        >
+>
     <testsuites>
-        <testsuite name="BitFrame Tests">
-            <directory>./test/</directory>
+        <testsuite name="bitframe_whoops">
+            <directory suffix="Test.php">./test</directory>
         </testsuite>
     </testsuites>
 

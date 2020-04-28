@@ -4,25 +4,24 @@
  * BitFrame Framework (https://www.bitframephp.com)
  *
  * @author    Daniyal Hamid
- * @copyright Copyright (c) 2017-2018 Daniyal Hamid (https://designcise.com)
- *
- * @author    Franz Liedke
- * @copyright Copyright (c) 2015-2017 Franz Liedke
- *
- * @license   https://github.com/designcise/bitframe-whoops/blob/master/LICENSE.md MIT License
+ * @copyright Copyright (c) 2017-2020 Daniyal Hamid (https://designcise.com)
+ * @license   https://bitframephp.com/about/license MIT License
  */
 
-namespace BitFrame\ErrorHandler;
+namespace BitFrame\Whoops;
 
-use \Psr\Http\Message\{ServerRequestInterface, ResponseInterface};
-use \Psr\Http\Server\{RequestHandlerInterface, MiddlewareInterface};
-
-use \Whoops\Run;
-use \Whoops\Util\Misc;
-use \Whoops\Handler\{PlainTextHandler, JsonResponseHandler, XmlResponseHandler, PrettyPageHandler};
-
+use Psr\Http\Message\{ServerRequestInterface, ResponseInterface};
+use Psr\Http\Server\{RequestHandlerInterface, MiddlewareInterface};
+use Whoops\Run;
+use Whoops\Util\Misc;
+use Whoops\Handler\{
+    PlainTextHandler,
+    JsonResponseHandler,
+    XmlResponseHandler,
+    PrettyPageHandler
+};
 use BitFrame\Delegate\CallableMiddlewareTrait;
-use BitFrame\ErrorHandler\Handler\JsonpResponseHandler;
+use BitFrame\Whoops\Handler\JsonpResponseHandler;
 
 /**
  * Whoops error handler middleware to handle application

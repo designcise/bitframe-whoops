@@ -6,29 +6,16 @@ Whoops error handler middleware to handle application or middleware specific err
 
 See [installation docs](https://www.bitframephp.com/middleware/error-handler/whoops) for instructions on installing and using this middleware.
 
-### Usage Example
+## Tests
 
-```
-use \BitFrame\ErrorHandler\WhoopsErrorHandler;
+To run the tests you can use the following commands:
 
-require 'vendor/autoload.php';
-
-$app = new \BitFrame\Application;
-
-$format = 'auto';
-$handler = new WhoopsErrorHandler($format);
-
-$app->run([
-    /* In order to output response from the whoops error handler, 
-     * make sure you include a response emitter middleware, for example:
-     * \BitFrame\Message\DiactorosResponseEmitter::class, */
-    $handler
-]);
-```
-
-### Tests
-
-To execute the test suite, you will need [PHPUnit](https://phpunit.de/).
+| Command          | Type            |
+| ---------------- |:---------------:|
+| `composer test`  | PHPUnit tests   |
+| `composer style` | CodeSniffer     |
+| `composer md`    | MessDetector    |
+| `composer check` | PHPStan         |
 
 ### Contributing
 
@@ -37,9 +24,7 @@ To execute the test suite, you will need [PHPUnit](https://phpunit.de/).
 
 ### Documentation
 
-Documentation is available at:
-
-* https://www.bitframephp.com/middleware/error-handler/whoops/
+Complete documentation for v2.0 will be available soon.
 
 ### License
 

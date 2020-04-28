@@ -4,17 +4,13 @@
  * BitFrame Framework (https://www.bitframephp.com)
  *
  * @author    Daniyal Hamid
- * @copyright Copyright (c) 2017-2018 Daniyal Hamid (https://designcise.com)
- *
- * @author    Franz Liedke
- * @copyright Copyright (c) 2015-2017 Franz Liedke
- *
- * @license   https://github.com/designcise/bitframe-whoops/blob/master/LICENSE.md MIT License
+ * @copyright Copyright (c) 2017-2020 Daniyal Hamid (https://designcise.com)
+ * @license   https://bitframephp.com/about/license MIT License
  */
 
-namespace BitFrame\ErrorHandler;
+namespace BitFrame\Whoops;
 
-use \Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Message\ServerRequestInterface;
 
 /**
  * Detect any of the supported preferred formats 
@@ -23,19 +19,13 @@ use \Psr\Http\Message\ServerRequestInterface;
 class FormatNegotiator
 {
     /** @var array Available formats with MIME types */
-    private static $formats = [
+    private static array $formats = [
         'html' => ['text/html', 'application/xhtml+xml'],
         'json' => ['application/json', 'text/json', 'application/x-json'],
         'xml' => ['text/xml', 'application/xml', 'application/x-xml'],
         'txt' => ['text/plain']
     ];
 
-    /**
-     * Returns the preferred format based on the Accept header.
-     *
-     * @param ServerRequestInterface $request
-     * @return string
-     */
     public static function getPreferredFormat(ServerRequestInterface $request): string
     {
         $acceptTypes = $request->getHeader('accept');
@@ -48,8 +38,8 @@ class FormatNegotiator
             $counters = [];
             foreach (self::$formats as $format => $values) {
                 foreach ($values as $value) {
-                    $counters[$format] = isset($counters[$format]) ? $counters[$format] : 0;
-                    $counters[$format] += intval(strpos($acceptType, $value) !== FALSE);
+                    $counters[$format] = $counters[$format] ?? 0;
+                    $counters[$format] += (int)(strpos($acceptType, $value) !== false);
                 }
             }
 

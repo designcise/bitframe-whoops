@@ -4,18 +4,14 @@
  * BitFrame Framework (https://www.bitframephp.com)
  *
  * @author    Daniyal Hamid
- * @copyright Copyright (c) 2017-2018 Daniyal Hamid (https://designcise.com)
- *
- * @author    Filipe Dobreira
- * @copyright Copyright (c) 2013-2018 Filipe Dobreira (http://github.com/filp)
- *
- * @license   https://github.com/designcise/bitframe-whoops/blob/master/LICENSE.md MIT License
+ * @copyright Copyright (c) 2017-2020 Daniyal Hamid (https://designcise.com)
+ * @license   https://bitframephp.com/about/license MIT License
  */
 
-namespace BitFrame\ErrorHandler\Handler;
+namespace BitFrame\Whoops\Handler;
 
-use \Whoops\Handler\Handler;
-use \Whoops\Exception\Formatter;
+use Whoops\Handler\Handler;
+use Whoops\Exception\Formatter;
 
 /**
  * Catches an exception and converts it to a JSONP
@@ -25,18 +21,12 @@ use \Whoops\Exception\Formatter;
  */
 class JsonpResponseHandler extends Handler
 {
-    /** @var bool */
-    private $returnFrames = false;
+    private bool $returnFrames = false;
 
-    /** @var bool */
-    private $jsonApi = false;
-    
-    /** @var string */
-    private $callback;
+    private bool $jsonApi = false;
 
-    /**
-     * @param string $callback JSONP callback
-     */
+    private string $callback;
+
     public function __construct(string $callback)
     {
         $this->callback = $callback;
@@ -52,7 +42,7 @@ class JsonpResponseHandler extends Handler
      */
     public function setJsonApi(bool $jsonApi = false): self
     {
-        $this->jsonApi = (bool) $jsonApi;
+        $this->jsonApi = $jsonApi;
         return $this;
     }
 
@@ -63,7 +53,7 @@ class JsonpResponseHandler extends Handler
      */
     public function addTraceToOutput(?bool $returnFrames = null)
     {
-        if (func_num_args() == 0) {
+        if (func_num_args() === 0) {
             return $this->returnFrames;
         }
 
