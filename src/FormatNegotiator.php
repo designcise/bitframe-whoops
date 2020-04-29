@@ -12,43 +12,58 @@ namespace BitFrame\Whoops;
 
 use Psr\Http\Message\ServerRequestInterface;
 
+use BitFrame\Whoops\Provider\{
+    ProviderInterface,
+    HtmlHandlerProvider,
+    JsonHandlerProvider,
+    TextHandlerProvider,
+    XmlHandlerProvider
+};
+
+use function asort;
+use function array_key_last;
+
 /**
- * Detect any of the supported preferred formats 
+ * Detect any of the supported preferred formats
  * from an HTTP request.
  */
 class FormatNegotiator
 {
-    /** @var array Available formats with MIME types */
     private static array $formats = [
-        'html' => ['text/html', 'application/xhtml+xml'],
-        'json' => ['application/json', 'text/json', 'application/x-json'],
-        'xml' => ['text/xml', 'application/xml', 'application/x-xml'],
-        'txt' => ['text/plain']
+        HtmlHandlerProvider::class,
+        JsonHandlerProvider::class,
+        TextHandlerProvider::class,
+        XmlHandlerProvider::class,
     ];
 
-    public static function getPreferredFormat(ServerRequestInterface $request): string
+    public static function fromRequest(ServerRequestInterface $request): ProviderInterface
     {
         $acceptTypes = $request->getHeader('accept');
 
-        if (count($acceptTypes) > 0) {
-            $acceptType = $acceptTypes[0];
-
-            // as many formats may match for a given Accept header, 
-            // look for the one that fits the best
-            $counters = [];
-            foreach (self::$formats as $format => $values) {
-                foreach ($values as $value) {
-                    $counters[$format] = $counters[$format] ?? 0;
-                    $counters[$format] += (int)(strpos($acceptType, $value) !== false);
-                }
-            }
-
-            // sort the array to retrieve the format that best matches the Accept header
-            asort($counters);
-            end($counters);
-            return key($counters);
+        if (! isset($acceptTypes[0])) {
+            return new HtmlHandlerProvider();
         }
 
-        return 'html';
+        $acceptType = $acceptTypes[0];
+        $score = self::calculateRelevance($acceptType);
+        asort($score);
+
+        $format = array_key_last($score);
+
+        return ($score[$format] === 0)
+            ? new HtmlHandlerProvider()
+            : new $format();
+    }
+
+    private static function calculateRelevance(string $acceptType): array
+    {
+        $score = [];
+        foreach (self::$formats as $format) {
+            foreach ($format::MIMES as $value) {
+                $score[$format] = $score[$format] ?? 0;
+                $score[$format] += (int) (strpos($acceptType, $value) !== false);
+            }
+        }
+        return $score;
     }
 }

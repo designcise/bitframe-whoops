@@ -1,10 +1,15 @@
 # BitFrame\ErrorHandler\Whoops
 
+[![codecov](https://codecov.io/gh/designcise/bitframe-whoops/branch/2.x/graph/badge.svg)](https://codecov.io/gh/designcise/bitframe-whoops)
+[![Build Status](https://travis-ci.org/designcise/bitframe-whoops.svg?branch=2.x)](https://travis-ci.org/designcise/bitframe-whoops)
+
 Whoops error handler middleware to handle application or middleware specific errors.
 
 ### Installation
 
-See [installation docs](https://www.bitframephp.com/middleware/error-handler/whoops) for instructions on installing and using this middleware.
+```
+$ composer require "designcise/bitframe-whoops:2.x-dev"
+```
 
 ## Tests
 
