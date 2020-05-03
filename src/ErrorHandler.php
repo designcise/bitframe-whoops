@@ -64,10 +64,13 @@ class ErrorHandler implements MiddlewareInterface
     {
         $this->whoops->allowQuit(false);
         $method = Run::EXCEPTION_HANDLER;
+        $code = http_response_code();
 
         ob_start();
         $this->whoops->$method($exception);
-        $response = $this->responseFactory->createResponse(self::STATUS_INTERNAL_SERVER_ERROR);
+        $response = $this->responseFactory->createResponse(
+            ($code < 400 || $code > 600) ? self::STATUS_INTERNAL_SERVER_ERROR : $code
+        );
         $response->getBody()->write(ob_get_clean());
 
         return $response;
@@ -76,19 +79,18 @@ class ErrorHandler implements MiddlewareInterface
     private function createErrorHandler(): callable
     {
         $errorHandlerMethod = Run::ERROR_HANDLER;
-        $whoops = $this->whoops;
 
-        return static function (
+        return function (
             int $errno,
             string $errstr,
             string $errfile,
             int $errline
-        ) use ($whoops, $errorHandlerMethod) {
+        ) use ($errorHandlerMethod) {
             if (! (error_reporting() & $errno)) {
                 return;
             }
 
-            $whoops->{$errorHandlerMethod}($errno, $errstr, $errfile, $errline);
+            $this->whoops->{$errorHandlerMethod}($errno, $errstr, $errfile, $errline);
         };
     }
 }

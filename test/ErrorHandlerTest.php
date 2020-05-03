@@ -35,13 +35,14 @@ class ErrorHandlerTest extends TestCase
         return [
             'USER_ERROR' => [
                 fn () => trigger_error('random error', E_USER_ERROR),
-                ['type' => ErrorException::class, 'message' => 'random error'],
+                ['status' => 500, 'type' => ErrorException::class, 'message' => 'random error'],
             ],
             'exception' => [
                 function () {
+                    http_response_code(422);
                     throw new InvalidArgumentException('random error');
                 },
-                ['type' => InvalidArgumentException::class, 'message' => 'random error'],
+                ['status' => 422, 'type' => InvalidArgumentException::class, 'message' => 'random error'],
             ],
         ];
     }
@@ -80,14 +81,26 @@ class ErrorHandlerTest extends TestCase
 
         /** @var \Prophecy\Prophecy\ObjectProphecy|ResponseFactoryInterface $responseFactory */
         $responseFactory = $this->prophesize(ResponseFactoryInterface::class);
-        $responseFactory->createResponse(Argument::any(), Argument::any())->willReturn($response->reveal());
+        $responseFactory
+            ->createResponse(Argument::any(), Argument::any())
+            ->will(
+                function ($args) use ($response, $phpunit, $expectedError) {
+                    $phpunit->assertSame($expectedError['status'], $args[0]);
+
+                    return $response->reveal();
+                }
+            );
 
         $middlewares = [
             new ErrorHandler($responseFactory->reveal()),
             $middleware,
         ];
 
-        $handler = new MiddlewareHandler($middlewares, $responseFactory->reveal());
+        /** @var \Prophecy\Prophecy\ObjectProphecy|ResponseFactoryInterface $responseFactory */
+        $responseFactory2 = $this->prophesize(ResponseFactoryInterface::class);
+        $responseFactory2->createResponse(Argument::any(), Argument::any())->willReturn($response->reveal());
+
+        $handler = new MiddlewareHandler($middlewares, $responseFactory2->reveal());
         $response = $handler->handle($request->reveal());
 
         $this->assertInstanceOf(ResponseInterface::class, $response);

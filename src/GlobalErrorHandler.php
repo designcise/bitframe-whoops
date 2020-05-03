@@ -46,11 +46,10 @@ class GlobalErrorHandler implements MiddlewareInterface
 
         $this->whoops->allowQuit(true);
         $this->whoops->writeToOutput(true);
-        $whoops = $this->whoops;
 
-        $this->whoops->pushHandler(function () use ($whoops) {
+        $this->whoops->pushHandler(function () {
             $code = http_response_code();
-            $whoops->sendHttpCode(
+            $this->whoops->sendHttpCode(
                 ($code < 400 || $code > 600) ? self::STATUS_INTERNAL_SERVER_ERROR : $code
             );
         });
