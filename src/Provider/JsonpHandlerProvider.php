@@ -29,10 +29,7 @@ class JsonpHandlerProvider extends AbstractProvider
             );
         }
 
-        $handler = new JsonpResponseHandler($queryParams['callback']);
-        $handler->setJsonApi(true);
-
-        return $handler;
+        return new JsonpResponseHandler($queryParams['callback']);
     }
 
     public function getPreferredContentType(): string

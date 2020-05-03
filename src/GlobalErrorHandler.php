@@ -18,14 +18,19 @@ use function http_response_code;
 
 class GlobalErrorHandler implements MiddlewareInterface
 {
+    use HandlerOptionsAwareTrait;
+
     /** @var int */
     private const STATUS_INTERNAL_SERVER_ERROR = 500;
 
     private RunInterface $whoops;
 
-    public function __construct()
+    private array $options;
+
+    public function __construct(array $options = [])
     {
         $this->whoops = new Run();
+        $this->options = $options;
     }
 
     /**
@@ -39,18 +44,25 @@ class GlobalErrorHandler implements MiddlewareInterface
         return $handler->handle($request);
     }
 
+    public function getOptions(): array
+    {
+        return $this->options;
+    }
+
     private function registerErrorHandler(ServerRequestInterface $request): void
     {
         $format = FormatNegotiator::fromRequest($request);
-        $this->whoops->pushHandler($format->getHandler());
+        $errorHandler = $format->getHandler();
+        $this->applyOptions($errorHandler);
+        $this->whoops->pushHandler($errorHandler);
 
         $this->whoops->allowQuit(true);
         $this->whoops->writeToOutput(true);
 
         $this->whoops->pushHandler(function () {
-            $code = http_response_code();
+            $statusCode = http_response_code();
             $this->whoops->sendHttpCode(
-                ($code < 400 || $code > 600) ? self::STATUS_INTERNAL_SERVER_ERROR : $code
+                ($statusCode < 400 || $statusCode > 600) ? self::STATUS_INTERNAL_SERVER_ERROR : $statusCode
             );
         });
 

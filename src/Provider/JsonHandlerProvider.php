@@ -18,10 +18,7 @@ class JsonHandlerProvider extends AbstractProvider
 
     public function getHandler(): HandlerInterface
     {
-        $handler = new JsonResponseHandler();
-        $handler->setJsonApi(true);
-
-        return $handler;
+        return new JsonResponseHandler();
     }
 
     public function getPreferredContentType(): string

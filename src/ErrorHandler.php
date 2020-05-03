@@ -15,14 +15,16 @@ use Psr\Http\Server\{RequestHandlerInterface, MiddlewareInterface};
 use Whoops\{Run, RunInterface};
 use Throwable;
 
-use function error_reporting;
 use function set_error_handler;
 use function restore_error_handler;
 use function ob_start;
 use function ob_get_clean;
+use function method_exists;
 
 class ErrorHandler implements MiddlewareInterface
 {
+    use HandlerOptionsAwareTrait;
+
     /** @var int */
     private const STATUS_INTERNAL_SERVER_ERROR = 500;
 
@@ -30,9 +32,12 @@ class ErrorHandler implements MiddlewareInterface
 
     private RunInterface $whoops;
 
-    public function __construct(ResponseFactoryInterface $responseFactory)
+    private array $options;
+
+    public function __construct(ResponseFactoryInterface $responseFactory, array $options = [])
     {
         $this->responseFactory = $responseFactory;
+        $this->options = $options;
         $this->whoops = new Run();
     }
 
@@ -44,14 +49,20 @@ class ErrorHandler implements MiddlewareInterface
         RequestHandlerInterface $handler
     ): ResponseInterface {
         $format = FormatNegotiator::fromRequest($request);
-        $this->whoops->pushHandler($format->getHandler());
+        $errorHandler = $format->getHandler();
+        $this->applyOptions($errorHandler);
+        $this->whoops->pushHandler($errorHandler);
 
-        set_error_handler($this->createErrorHandler());
+        $this->whoops->allowQuit(false);
+        $this->whoops->writeToOutput(true);
+
+        set_error_handler([$this->whoops, Run::ERROR_HANDLER]);
+        register_shutdown_function([$this->whoops, Run::SHUTDOWN_HANDLER]);
 
         try {
             $response = $handler->handle($request);
         } catch (Throwable $e) {
-            $response = $this->handleError($e)
+            $response = $this->handleException($e)
                 ->withHeader('Content-Type', $format->getPreferredContentType());
         }
 
@@ -60,37 +71,22 @@ class ErrorHandler implements MiddlewareInterface
         return $response;
     }
 
-    private function handleError(Throwable $exception): ResponseInterface
+    public function getOptions(): array
     {
-        $this->whoops->allowQuit(false);
-        $method = Run::EXCEPTION_HANDLER;
-        $code = http_response_code();
+        return $this->options;
+    }
+
+    private function handleException(Throwable $exception): ResponseInterface
+    {
+        $statusCode = http_response_code();
 
         ob_start();
-        $this->whoops->$method($exception);
+        $this->whoops->{Run::EXCEPTION_HANDLER}($exception);
         $response = $this->responseFactory->createResponse(
-            ($code < 400 || $code > 600) ? self::STATUS_INTERNAL_SERVER_ERROR : $code
+            ($statusCode < 400 || $statusCode > 600) ? self::STATUS_INTERNAL_SERVER_ERROR : $statusCode
         );
         $response->getBody()->write(ob_get_clean());
 
         return $response;
-    }
-
-    private function createErrorHandler(): callable
-    {
-        $errorHandlerMethod = Run::ERROR_HANDLER;
-
-        return function (
-            int $errno,
-            string $errstr,
-            string $errfile,
-            int $errline
-        ) use ($errorHandlerMethod) {
-            if (! (error_reporting() & $errno)) {
-                return;
-            }
-
-            $this->whoops->{$errorHandlerMethod}($errno, $errstr, $errfile, $errline);
-        };
     }
 }

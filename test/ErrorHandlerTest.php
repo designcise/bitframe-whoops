@@ -40,9 +40,9 @@ class ErrorHandlerTest extends TestCase
             'exception' => [
                 function () {
                     http_response_code(422);
-                    throw new InvalidArgumentException('random error');
+                    throw new InvalidArgumentException('random exception');
                 },
-                ['status' => 422, 'type' => InvalidArgumentException::class, 'message' => 'random error'],
+                ['status' => 422, 'type' => InvalidArgumentException::class, 'message' => 'random exception'],
             ],
         ];
     }
@@ -65,7 +65,7 @@ class ErrorHandlerTest extends TestCase
         $stream = $this->prophesize(StreamInterface::class);
         $stream->write(Argument::any())->will(
             function ($args) use ($request, $phpunit, $expectedError) {
-                $error = json_decode($args[0], true)['errors'][0] ?? [];
+                $error = json_decode($args[0], true)['error'] ?? [];
 
                 $phpunit->assertSame($expectedError['type'], $error['type']);
                 $phpunit->assertSame($expectedError['message'], $error['message']);
@@ -92,7 +92,9 @@ class ErrorHandlerTest extends TestCase
             );
 
         $middlewares = [
-            new ErrorHandler($responseFactory->reveal()),
+            new ErrorHandler($responseFactory->reveal(), [
+                'setJsonApi' => false,
+            ]),
             $middleware,
         ];
 
@@ -104,5 +106,18 @@ class ErrorHandlerTest extends TestCase
         $response = $handler->handle($request->reveal());
 
         $this->assertInstanceOf(ResponseInterface::class, $response);
+    }
+
+    public function testGetOptions(): void
+    {
+        $responseFactory = $this->prophesize(ResponseFactoryInterface::class);
+        $options = [
+            'addTraceToOutput' => true,
+            'setJsonApi' => false,
+        ];
+
+        $errorHandler = new ErrorHandler($responseFactory->reveal(), $options);
+
+        $this->assertSame($options, $errorHandler->getOptions());
     }
 }

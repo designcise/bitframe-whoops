@@ -18,10 +18,7 @@ class XmlHandlerProvider extends AbstractProvider
 
     public function getHandler(): HandlerInterface
     {
-        $handler = new XmlResponseHandler();
-        $handler->addTraceToOutput(true);
-
-        return $handler;
+        return new XmlResponseHandler();
     }
 
     public function getPreferredContentType(): string

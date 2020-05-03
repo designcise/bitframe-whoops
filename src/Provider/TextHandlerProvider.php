@@ -18,10 +18,7 @@ class TextHandlerProvider extends AbstractProvider
 
     public function getHandler(): HandlerInterface
     {
-        $handler = new PlainTextHandler();
-        $handler->addTraceToOutput(true);
-
-        return $handler;
+        return new PlainTextHandler();
     }
 
     public function getPreferredContentType(): string
