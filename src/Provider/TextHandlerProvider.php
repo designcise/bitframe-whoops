@@ -14,6 +14,7 @@ use Whoops\Handler\{HandlerInterface, PlainTextHandler};
 
 class TextHandlerProvider extends AbstractProvider
 {
+    /** @var string[] */
     public const MIMES = ['text/plain'];
 
     public function getHandler(): HandlerInterface

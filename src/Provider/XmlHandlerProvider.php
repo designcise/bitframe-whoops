@@ -14,6 +14,7 @@ use Whoops\Handler\{HandlerInterface, XmlResponseHandler};
 
 class XmlHandlerProvider extends AbstractProvider
 {
+    /** @var string[] */
     public const MIMES = ['text/xml', 'application/xml', 'application/x-xml'];
 
     public function getHandler(): HandlerInterface

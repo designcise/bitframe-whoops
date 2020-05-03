@@ -14,6 +14,7 @@ use Whoops\Handler\{HandlerInterface, JsonResponseHandler};
 
 class JsonHandlerProvider extends AbstractProvider
 {
+    /** @var string[] */
     public const MIMES = ['application/json', 'text/json', 'application/x-json'];
 
     public function getHandler(): HandlerInterface

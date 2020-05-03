@@ -14,6 +14,10 @@ use Whoops\Handler\{HandlerInterface, PrettyPageHandler};
 
 class HtmlHandlerProvider extends AbstractProvider
 {
+    /** @var string */
+    public const DATA_TABLE_NAME = 'Request Data';
+
+    /** @var string[] */
     public const MIMES = ['text/html', 'application/xhtml+xml'];
 
     public function getHandler(): HandlerInterface
@@ -21,15 +25,15 @@ class HtmlHandlerProvider extends AbstractProvider
         $request = $this->getRequest();
         $handler = new PrettyPageHandler();
 
-        $handler->addDataTable('Application/Request Data', [
+        $handler->addDataTable(self::DATA_TABLE_NAME, [
             'HTTP Method' => $request->getMethod(),
             'URI' => (string) $request->getUri(),
-            'Script' => $request->getServerParams()['SCRIPT_NAME'],
+            'Script' => $request->getServerParams()['SCRIPT_NAME'] ?? '',
             'Headers' => $request->getHeaders(),
             'Cookies' => $request->getCookieParams(),
             'Attributes' => $request->getAttributes(),
-            'Query String Arguments' => $request->getQueryParams(),
-            'Body Params' => $request->getParsedBody(),
+            'Query String' => $request->getQueryParams(),
+            'Parsed Body' => $request->getParsedBody(),
         ]);
 
         return $handler;

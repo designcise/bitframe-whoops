@@ -16,16 +16,18 @@ use RuntimeException;
 
 class JsonpHandlerProvider extends AbstractProvider
 {
+    /** @var string[] */
     public const MIMES = ['application/javascript'];
 
     public function getHandler(): HandlerInterface
     {
         $request = $this->getRequest();
         $queryParams = $request->getQueryParams();
+        $method = $request->getMethod();
 
-        if (! isset($queryParams['callback']) || $request->getMethod() !== 'GET') {
+        if (! isset($queryParams['callback']) || ($method !== 'GET' && $method !== 'HEAD')) {
             throw new RuntimeException(
-                'JSONP request must be a GET request and callback'
+                'JSONP request must be a GET or HEAD request with a "callback" parameter'
             );
         }
 

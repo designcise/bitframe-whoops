@@ -8,7 +8,7 @@
  * @license   https://bitframephp.com/about/license MIT License
  */
 
-namespace BitFrame\Test\Http;
+namespace BitFrame\Whoops\Test\Handler;
 
 use PHPUnit\Framework\TestCase;
 use Whoops\{Run, RunInterface};
@@ -172,7 +172,10 @@ class JsonpResponseHandlerTest extends TestCase
     public function testUsesSaneDefaultJsonEncodingFlags($value, $expected): void
     {
         $defaultFlags = JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP | JSON_UNESCAPED_SLASHES;
-        $this->whoops->pushHandler(new JsonpResponseHandler(self::CALLBACK, $defaultFlags));
+        $handler = new JsonpResponseHandler(self::CALLBACK);
+        $handler->setEncoding($defaultFlags);
+        $this->whoops->pushHandler($handler);
+
         $expected = json_encode($value, $defaultFlags);
 
         try {
