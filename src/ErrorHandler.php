@@ -19,7 +19,6 @@ use function set_error_handler;
 use function restore_error_handler;
 use function ob_start;
 use function ob_get_clean;
-use function method_exists;
 
 class ErrorHandler implements MiddlewareInterface
 {
@@ -34,10 +33,18 @@ class ErrorHandler implements MiddlewareInterface
 
     private array $options;
 
-    public function __construct(ResponseFactoryInterface $responseFactory, array $options = [])
-    {
+    private bool $catchGlobalErrors;
+
+    public function __construct(
+        ResponseFactoryInterface $responseFactory,
+        array $options = []
+    ) {
         $this->responseFactory = $responseFactory;
+
         $this->options = $options;
+        $this->catchGlobalErrors = $options['catchGlobalErrors'] ?? false;
+        unset($options['catchGlobalErrors']);
+
         $this->whoops = new Run();
     }
 
@@ -56,8 +63,11 @@ class ErrorHandler implements MiddlewareInterface
         $this->whoops->allowQuit(false);
         $this->whoops->writeToOutput(true);
 
-        set_error_handler([$this->whoops, Run::ERROR_HANDLER]);
-        register_shutdown_function([$this->whoops, Run::SHUTDOWN_HANDLER]);
+        if ($this->catchGlobalErrors) {
+            $this->whoops->register();
+        } else {
+            set_error_handler([$this->whoops, Run::ERROR_HANDLER]);
+        }
 
         try {
             $response = $handler->handle($request);
@@ -66,7 +76,9 @@ class ErrorHandler implements MiddlewareInterface
                 ->withHeader('Content-Type', $format->getPreferredContentType());
         }
 
-        restore_error_handler();
+        if (! $this->catchGlobalErrors) {
+            restore_error_handler();
+        }
 
         return $response;
     }
