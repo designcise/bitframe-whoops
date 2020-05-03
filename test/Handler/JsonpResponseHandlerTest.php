@@ -14,8 +14,9 @@ use PHPUnit\Framework\TestCase;
 use Whoops\{Run, RunInterface};
 use Whoops\Handler\HandlerInterface;
 use BitFrame\Whoops\Handler\JsonpResponseHandler;
-use RuntimeException;
 use Throwable;
+use RuntimeException;
+use InvalidArgumentException;
 
 use function json_decode;
 use function substr;
@@ -23,6 +24,7 @@ use function strpos;
 use function trim;
 use function get_class;
 use function reset;
+use function headers_list;
 
 /**
  * @covers \BitFrame\Whoops\Handler\JsonpResponseHandler
@@ -114,6 +116,82 @@ class JsonpResponseHandlerTest extends TestCase
             $this->assertEquals($jsonp['errors'][0]['type'], get_class($e));
 
             $this->assertArrayNotHasKey('trace', $jsonp['errors']);
+        }
+    }
+
+    public function invalidCallbackProvider(): array
+    {
+        return [
+            ['\u200C\u200D'], ['+invalid'], ['true'], ['false'],
+            ['instanceof'], ['break'], ['do'], ['instanceof'],
+            ['typeof'], ['case'], ['else'], ['new'],
+            ['var'], ['catch'], ['finally'], ['return'],
+            ['void'], ['continue'], ['for'], ['switch'],
+            ['while'], ['debugger'], ['function'], ['this'],
+            ['with'], ['default'], ['if'], ['throw'],
+            ['delete'], ['in'], ['try'], ['class'],
+            ['enum'], ['extends'], ['super'], ['const'],
+            ['export'], ['import'], ['implements'], ['let'],
+            ['private'], ['public'], ['yield'], ['interface'],
+            ['package'], ['protected'], ['static'], ['null'],
+        ];
+    }
+
+    /**
+     * @dataProvider invalidCallbackProvider
+     *
+     * @param mixed $callbackName
+     */
+    public function testThrowsExceptionWhenCallbackIsInvalid($callbackName): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        new JsonpResponseHandler($callbackName);
+    }
+
+    public function valuesToJsonEncodeProvider(): array
+    {
+        return [
+            'uri' => [
+                'https://example.com/foo?bar=baz&baz=bat',
+                'https://example.com/foo?bar=baz\u0026baz=bat'
+            ],
+            'html' => [
+                '<p class="test">content</p>',
+                '\u003Cp class=\u0022test\u0022\u003Econtent\u003C/p\u003E'
+            ],
+            'string' => ["Don't quote!", 'Don\u0027t quote!'],
+        ];
+    }
+
+    /**
+     * @runInSeparateProcess
+     * @dataProvider valuesToJsonEncodeProvider
+     *
+     * @param string $value
+     */
+    public function testUsesSaneDefaultJsonEncodingFlags($value, $expected): void
+    {
+        $defaultFlags = JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP | JSON_UNESCAPED_SLASHES;
+        $this->whoops->pushHandler(new JsonpResponseHandler(self::CALLBACK, $defaultFlags));
+        $expected = json_encode($value, $defaultFlags);
+
+        try {
+            throw new RuntimeException($value);
+        } catch (Throwable $e) {
+            $output = $this->whoops->handleException($e);
+
+            $this->assertStringContainsString($expected, $output);
+        }
+    }
+
+    public function testJsonEncodeFlags(): void
+    {
+        try {
+            throw new RuntimeException('<>\'&"');
+        } catch (Throwable $e) {
+            $output = $this->whoops->handleException($e);
+
+            $this->assertStringContainsString('"\u003C\u003E\u0027\u0026\u0022"', $output);
         }
     }
 

@@ -30,7 +30,17 @@ use const JSON_PARTIAL_OUTPUT_ON_ERROR;
  */
 class JsonpResponseHandler extends Handler
 {
+    /** @var string */
     private const MIME = 'application/json';
+
+    /** @var int */
+    private const DEFAULT_ENCODING = JSON_PARTIAL_OUTPUT_ON_ERROR
+        | JSON_THROW_ON_ERROR
+        | JSON_HEX_QUOT
+        | JSON_HEX_TAG
+        | JSON_HEX_AMP
+        | JSON_HEX_APOS
+        | JSON_UNESCAPED_SLASHES;
 
     private bool $returnFrames = false;
 
@@ -38,17 +48,16 @@ class JsonpResponseHandler extends Handler
 
     private string $callback;
 
-    public function __construct(string $callback)
+    private int $encodingOptions;
+
+    public function __construct(string $callback, int $encodingOptions = self::DEFAULT_ENCODING)
     {
         if (! $this->isCallbackValid($callback)) {
             throw new InvalidArgumentException('Callback name is invalid');
         }
 
-        if (! headers_sent()) {
-            header('X-Content-Type-Options: nosniff');
-        }
-
         $this->callback = $callback;
+        $this->encodingOptions = $encodingOptions;
     }
 
     public function addTraceToOutput(bool $returnFrames): self
@@ -71,15 +80,7 @@ class JsonpResponseHandler extends Handler
 
         $response = ($this->jsonApi) ? ['errors' => [$error]] : ['error' => $error];
 
-        $encodingOptions = JSON_PARTIAL_OUTPUT_ON_ERROR
-            | JSON_THROW_ON_ERROR
-            | JSON_HEX_QUOT
-            | JSON_HEX_TAG
-            | JSON_HEX_AMP
-            | JSON_HEX_APOS
-            | JSON_UNESCAPED_SLASHES;
-
-        $json = json_encode($response, $encodingOptions);
+        $json = json_encode($response, $this->encodingOptions);
         echo "{$this->callback}($json)";
 
         return Handler::QUIT;
@@ -88,6 +89,12 @@ class JsonpResponseHandler extends Handler
     public function setJsonApi(bool $jsonApi): self
     {
         $this->jsonApi = $jsonApi;
+        return $this;
+    }
+
+    public function setEncoding(int $encoding): self
+    {
+        $this->encodingOptions = $encoding;
         return $this;
     }
 
