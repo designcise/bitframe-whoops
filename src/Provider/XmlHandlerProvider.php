@@ -12,7 +12,7 @@ namespace BitFrame\Whoops\Provider;
 
 use Whoops\Handler\{HandlerInterface, XmlResponseHandler};
 
-class XmlHandlerProvider implements ProviderInterface
+class XmlHandlerProvider extends AbstractProvider
 {
     public const MIMES = ['text/xml', 'application/xml', 'application/x-xml'];
 

@@ -11,9 +11,8 @@
 namespace BitFrame\Whoops;
 
 use Psr\Http\Message\ServerRequestInterface;
-
 use BitFrame\Whoops\Provider\{
-    ProviderInterface,
+    AbstractProvider,
     HtmlHandlerProvider,
     JsonHandlerProvider,
     TextHandlerProvider,
@@ -36,12 +35,12 @@ class FormatNegotiator
         XmlHandlerProvider::class,
     ];
 
-    public static function fromRequest(ServerRequestInterface $request): ProviderInterface
+    public static function fromRequest(ServerRequestInterface $request): AbstractProvider
     {
         $acceptTypes = $request->getHeader('accept');
 
         if (! isset($acceptTypes[0])) {
-            return new HtmlHandlerProvider();
+            return new HtmlHandlerProvider($request);
         }
 
         $acceptType = $acceptTypes[0];
@@ -51,8 +50,8 @@ class FormatNegotiator
         $format = array_key_last($score);
 
         return ($score[$format] === 0)
-            ? new HtmlHandlerProvider()
-            : new $format();
+            ? new HtmlHandlerProvider($request)
+            : new $format($request);
     }
 
     private static function calculateRelevance(string $acceptType): array

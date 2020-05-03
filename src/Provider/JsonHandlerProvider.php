@@ -12,14 +12,14 @@ namespace BitFrame\Whoops\Provider;
 
 use Whoops\Handler\{HandlerInterface, JsonResponseHandler};
 
-class JsonHandlerProvider implements ProviderInterface
+class JsonHandlerProvider extends AbstractProvider
 {
     public const MIMES = ['application/json', 'text/json', 'application/x-json'];
 
     public function getHandler(): HandlerInterface
     {
         $handler = new JsonResponseHandler();
-        $handler->addTraceToOutput(true);
+        $handler->setJsonApi(true);
 
         return $handler;
     }

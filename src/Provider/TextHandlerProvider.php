@@ -12,7 +12,7 @@ namespace BitFrame\Whoops\Provider;
 
 use Whoops\Handler\{HandlerInterface, PlainTextHandler};
 
-class TextHandlerProvider implements ProviderInterface
+class TextHandlerProvider extends AbstractProvider
 {
     public const MIMES = ['text/plain'];
 
