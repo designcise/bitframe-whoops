@@ -12,7 +12,6 @@ namespace BitFrame\Test\Http;
 
 use PHPUnit\Framework\TestCase;
 use Prophecy\Argument;
-use Psr\Http\Server\RequestHandlerInterface;
 use Psr\Http\Message\{
     ResponseFactoryInterface,
     ServerRequestInterface,
@@ -39,10 +38,9 @@ class ErrorHandlerTest extends TestCase
             ],
             'exception' => [
                 function () {
-                    http_response_code(422);
                     throw new InvalidArgumentException('random exception');
                 },
-                ['status' => 422, 'type' => InvalidArgumentException::class, 'message' => 'random exception'],
+                ['status' => 500, 'type' => InvalidArgumentException::class, 'message' => 'random exception'],
             ],
         ];
     }
@@ -64,13 +62,13 @@ class ErrorHandlerTest extends TestCase
         /** @var \Prophecy\Prophecy\ObjectProphecy|StreamInterface $stream */
         $stream = $this->prophesize(StreamInterface::class);
         $stream->write(Argument::any())->will(
-            function ($args) use ($request, $phpunit, $expectedError) {
+            function ($args) use ($stream, $phpunit, $expectedError) {
                 $error = json_decode($args[0], true)['error'] ?? [];
 
                 $phpunit->assertSame($expectedError['type'], $error['type']);
                 $phpunit->assertSame($expectedError['message'], $error['message']);
 
-                return $request->reveal();
+                return $stream->reveal();
             }
         );
 
@@ -96,6 +94,73 @@ class ErrorHandlerTest extends TestCase
                 'setJsonApi' => false,
             ]),
             $middleware,
+        ];
+
+        /** @var \Prophecy\Prophecy\ObjectProphecy|ResponseFactoryInterface $responseFactory */
+        $responseFactory2 = $this->prophesize(ResponseFactoryInterface::class);
+        $responseFactory2->createResponse(Argument::any(), Argument::any())->willReturn($response->reveal());
+
+        $handler = new MiddlewareHandler($middlewares, $responseFactory2->reveal());
+        $response = $handler->handle($request->reveal());
+
+        $this->assertInstanceOf(ResponseInterface::class, $response);
+    }
+
+    /**
+     * @runInSeparateProcess
+     */
+    public function testCatchGlobalErrors(): void
+    {
+        /** @var \Prophecy\Prophecy\ObjectProphecy|ServerRequestInterface $request */
+        $request = $this->prophesize(ServerRequestInterface::class);
+        $request->getHeader('accept')->willReturn(['application/json']);
+
+        $phpunit = $this;
+        $expectedError = [
+            'status' => 500,
+            'type' => InvalidArgumentException::class,
+            'message' => 'random exception',
+        ];
+
+        /** @var \Prophecy\Prophecy\ObjectProphecy|StreamInterface $stream */
+        $stream = $this->prophesize(StreamInterface::class);
+        $stream->write(Argument::any())->will(
+            function ($args) use ($stream, $phpunit, $expectedError) {
+                $error = json_decode($args[0], true)['error'] ?? [];
+
+                $phpunit->assertSame($expectedError['type'], $error['type']);
+                $phpunit->assertSame($expectedError['message'], $error['message']);
+
+                return $stream->reveal();
+            }
+        );
+
+        /** @var \Prophecy\Prophecy\ObjectProphecy|ResponseInterface $response */
+        $response = $this->prophesize(ResponseInterface::class);
+        $response->withHeader('Content-Type', 'application/json')->willReturn($response->reveal());
+        $response->getBody()->willReturn($stream);
+
+        /** @var \Prophecy\Prophecy\ObjectProphecy|ResponseFactoryInterface $responseFactory */
+        $responseFactory = $this->prophesize(ResponseFactoryInterface::class);
+        $responseFactory
+            ->createResponse(Argument::any(), Argument::any())
+            ->will(
+                function ($args) use ($response, $phpunit, $expectedError) {
+                    $phpunit->assertSame($expectedError['status'], $args[0]);
+
+                    return $response->reveal();
+                }
+            );
+
+        $middlewares = [
+            new ErrorHandler($responseFactory->reveal(), [
+                'catchGlobalErrors' => true,
+                'setJsonApi' => false,
+            ]),
+            function () use ($expectedError) {
+                http_response_code($expectedError['status']);
+                throw new InvalidArgumentException($expectedError['message']);
+            },
         ];
 
         /** @var \Prophecy\Prophecy\ObjectProphecy|ResponseFactoryInterface $responseFactory */
