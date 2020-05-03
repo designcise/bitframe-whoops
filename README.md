@@ -5,11 +5,13 @@
 
 Whoops error handler middleware to handle application or middleware specific errors.
 
-### Installation
+## Installation
 
 ```
 $ composer require "designcise/bitframe-whoops:2.x-dev"
 ```
+
+Please note that this package requires PHP 7.4.0 or newer.
 
 ## Quickstart
 
@@ -97,15 +99,15 @@ To run the tests you can use the following commands:
 | `composer md`    | MessDetector    |
 | `composer check` | PHPStan         |
 
-### Contributing
+## Contributing
 
 * File issues at https://github.com/designcise/bitframe-whoops/issues
 * Issue patches to https://github.com/designcise/bitframe-whoops/pulls
 
-### Documentation
+## Documentation
 
 Complete documentation for v2.0 will be available soon.
 
-### License
+## License
 
 Please see [License File](LICENSE.md) for licensing information.
