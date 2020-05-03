@@ -17,6 +17,9 @@
     <filter>
         <whitelist>
             <directory>./src/</directory>
+            <exclude>
+                <file>./src/Provider/AbstractProvider.php</file>
+            </exclude>
         </whitelist>
     </filter>
 </phpunit>
