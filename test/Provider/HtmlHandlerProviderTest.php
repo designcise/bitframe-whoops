@@ -46,6 +46,7 @@ class HtmlHandlerProviderTest extends TestCase
         $request->method('getParsedBody')->willReturn([]);
 
         $handlerProvider = new HtmlHandlerProvider($request);
+        /** @var \Whoops\Handler\PrettyPageHandler $handler */
         $handler = $handlerProvider->getHandler();
 
         $this->assertInstanceOf(HandlerInterface::class, $handler);

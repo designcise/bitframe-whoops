@@ -21,8 +21,11 @@ use Psr\Http\Message\{
 use Whoops\Exception\ErrorException;
 use BitFrame\Whoops\Test\Asset\MiddlewareHandler;
 use BitFrame\Whoops\ErrorHandler;
-
 use InvalidArgumentException;
+
+use function trigger_error;
+use function json_decode;
+use function http_response_code;
 
 /**
  * @covers \BitFrame\Whoops\ErrorHandler

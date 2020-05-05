@@ -18,13 +18,19 @@ use Throwable;
 use RuntimeException;
 use InvalidArgumentException;
 
+use function json_encode;
 use function json_decode;
 use function substr;
 use function strpos;
 use function trim;
 use function get_class;
 use function reset;
-use function headers_list;
+
+use const JSON_HEX_TAG;
+use const JSON_HEX_APOS;
+use const JSON_HEX_QUOT;
+use const JSON_HEX_AMP;
+use const JSON_UNESCAPED_SLASHES;
 
 /**
  * @covers \BitFrame\Whoops\Handler\JsonpResponseHandler
@@ -65,9 +71,9 @@ class JsonpResponseHandlerTest extends TestCase
             $this->assertArrayHasKey('file', $jsonp['error']);
             $this->assertArrayHasKey('line', $jsonp['error']);
 
-            $this->assertEquals($jsonp['error']['file'], __FILE__);
-            $this->assertEquals($jsonp['error']['message'], 'foobar');
-            $this->assertEquals($jsonp['error']['type'], get_class($e));
+            $this->assertEquals(__FILE__, $jsonp['error']['file']);
+            $this->assertEquals('foobar', $jsonp['error']['message']);
+            $this->assertEquals(get_class($e), $jsonp['error']['type']);
 
             $this->assertArrayNotHasKey('trace', $jsonp['error']);
         }
@@ -111,9 +117,9 @@ class JsonpResponseHandlerTest extends TestCase
             $this->assertArrayHasKey('file', $jsonp['errors'][0]);
             $this->assertArrayHasKey('line', $jsonp['errors'][0]);
 
-            $this->assertEquals($jsonp['errors'][0]['file'], __FILE__);
-            $this->assertEquals($jsonp['errors'][0]['message'], 'foobar');
-            $this->assertEquals($jsonp['errors'][0]['type'], get_class($e));
+            $this->assertEquals(__FILE__, $jsonp['errors'][0]['file']);
+            $this->assertEquals('foobar', $jsonp['errors'][0]['message']);
+            $this->assertEquals(get_class($e), $jsonp['errors'][0]['type']);
 
             $this->assertArrayNotHasKey('trace', $jsonp['errors']);
         }
@@ -169,7 +175,7 @@ class JsonpResponseHandlerTest extends TestCase
      *
      * @param string $value
      */
-    public function testUsesSaneDefaultJsonEncodingFlags($value, $expected): void
+    public function testUsesSaneDefaultJsonEncodingFlags($value): void
     {
         $defaultFlags = JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP | JSON_UNESCAPED_SLASHES;
         $handler = new JsonpResponseHandler(self::CALLBACK);

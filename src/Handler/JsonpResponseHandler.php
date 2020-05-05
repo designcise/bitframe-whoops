@@ -15,14 +15,17 @@ use Whoops\Exception\Formatter;
 use InvalidArgumentException;
 
 use function json_encode;
-use function headers_sent;
-use function header;
 use function explode;
 use function preg_match;
 use function in_array;
 
 use const JSON_THROW_ON_ERROR;
 use const JSON_PARTIAL_OUTPUT_ON_ERROR;
+use const JSON_HEX_QUOT;
+use const JSON_HEX_TAG;
+use const JSON_HEX_AMP;
+use const JSON_HEX_APOS;
+use const JSON_UNESCAPED_SLASHES;
 
 /**
  * Catches an exception and converts it to a JSONP response.
@@ -50,8 +53,10 @@ class JsonpResponseHandler extends Handler
 
     private int $encodingOptions;
 
-    public function __construct(string $callback, int $encodingOptions = self::DEFAULT_ENCODING)
-    {
+    public function __construct(
+        string $callback,
+        int $encodingOptions = self::DEFAULT_ENCODING
+    ) {
         if (! $this->isCallbackValid($callback)) {
             throw new InvalidArgumentException('Callback name is invalid');
         }
@@ -68,8 +73,6 @@ class JsonpResponseHandler extends Handler
 
     /**
      * @return int
-     *
-     * @throws \JsonException
      */
     public function handle(): int
     {
@@ -106,7 +109,7 @@ class JsonpResponseHandler extends Handler
     /**
      * @param string $callback
      *
-     * @return boolean
+     * @return bool
      *
      * @see \Symfony\Component\HttpFoundation\JsonResponse::setCallback()
      */

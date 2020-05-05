@@ -21,6 +21,7 @@ use BitFrame\Whoops\Provider\{
 
 use function asort;
 use function array_key_last;
+use function strpos;
 
 /**
  * Detect any of the supported preferred formats
