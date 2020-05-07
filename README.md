@@ -41,6 +41,7 @@ For example, to handle middleware-specific errors with `BitFrame\App` (or other 
 use BitFrame\App;
 use BitFrame\Emitter\SapiEmitter;
 use BitFrame\Whoops\ErrorHandler;
+use BitFrame\Whoops\Provider\HandlerProviderNegotiator;
 use BitFrame\Factory\HttpFactory;
 
 $app = new App();
@@ -51,7 +52,7 @@ $middleware = function () {
 
 $app->use([
     SapiEmitter::class,
-    new ErrorHandler(HttpFactory::getFactory(), [
+    new ErrorHandler(HttpFactory::getFactory(), HandlerProviderNegotiator::class, [
         'addTraceToOutput' => true,
         'setJsonApi' => false,
     ]),
@@ -66,12 +67,13 @@ To handle global errors with `BitFrame\App` (or other PSR-15 dispatchers) it wou
 ```php
 use BitFrame\App;
 use BitFrame\Whoops\ErrorHandler;
+use BitFrame\Whoops\Provider\HandlerProviderNegotiator;
 use BitFrame\Factory\HttpFactory;
 
 $app = new App();
 
 $app->run([
-    new ErrorHandler(HttpFactory::getFactory(), [
+    new ErrorHandler(HttpFactory::getFactory(), HandlerProviderNegotiator::class, [
         'catchGlobalErrors' => true,
         'addTraceToOutput' => true,
         'setJsonApi' => false,
