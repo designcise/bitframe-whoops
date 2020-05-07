@@ -21,6 +21,7 @@ use Psr\Http\Message\{
 use Whoops\Exception\ErrorException;
 use BitFrame\Whoops\Test\Asset\MiddlewareHandler;
 use BitFrame\Whoops\ErrorHandler;
+use BitFrame\Whoops\Provider\HandlerProviderNegotiator;
 use InvalidArgumentException;
 
 use function trigger_error;
@@ -93,7 +94,7 @@ class ErrorHandlerTest extends TestCase
             );
 
         $middlewares = [
-            new ErrorHandler($responseFactory->reveal(), [
+            new ErrorHandler($responseFactory->reveal(), HandlerProviderNegotiator::class, [
                 'setJsonApi' => false,
             ]),
             $middleware,
@@ -156,7 +157,7 @@ class ErrorHandlerTest extends TestCase
             );
 
         $middlewares = [
-            new ErrorHandler($responseFactory->reveal(), [
+            new ErrorHandler($responseFactory->reveal(), HandlerProviderNegotiator::class, [
                 'catchGlobalErrors' => true,
                 'setJsonApi' => false,
             ]),
@@ -184,7 +185,11 @@ class ErrorHandlerTest extends TestCase
             'setJsonApi' => false,
         ];
 
-        $errorHandler = new ErrorHandler($responseFactory->reveal(), $options);
+        $errorHandler = new ErrorHandler(
+            $responseFactory->reveal(),
+            HandlerProviderNegotiator::class,
+            $options
+        );
 
         $this->assertSame($options, $errorHandler->getOptions());
     }

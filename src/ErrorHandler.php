@@ -13,8 +13,11 @@ namespace BitFrame\Whoops;
 use Psr\Http\Message\{ResponseFactoryInterface, ServerRequestInterface, ResponseInterface};
 use Psr\Http\Server\{RequestHandlerInterface, MiddlewareInterface};
 use Whoops\{Run, RunInterface};
+use BitFrame\Whoops\Provider\{AbstractProvider, HandlerProviderNegotiator};
 use Throwable;
+use InvalidArgumentException;
 
+use function is_a;
 use function set_error_handler;
 use function restore_error_handler;
 use function ob_start;
@@ -27,9 +30,11 @@ class ErrorHandler implements MiddlewareInterface
     /** @var int */
     private const STATUS_INTERNAL_SERVER_ERROR = 500;
 
+    private RunInterface $whoops;
+
     private ResponseFactoryInterface $responseFactory;
 
-    private RunInterface $whoops;
+    private string $handlerProvider;
 
     private array $options;
 
@@ -37,9 +42,17 @@ class ErrorHandler implements MiddlewareInterface
 
     public function __construct(
         ResponseFactoryInterface $responseFactory,
+        string $handlerProvider = HandlerProviderNegotiator::class,
         array $options = []
     ) {
         $this->responseFactory = $responseFactory;
+        $this->handlerProvider = $handlerProvider;
+
+        if (! is_a($this->handlerProvider, AbstractProvider::class, true)) {
+            throw new InvalidArgumentException(
+                'Handler provider must be instance of ' . AbstractProvider::class
+            );
+        }
 
         $this->options = $options;
         $this->catchGlobalErrors = $options['catchGlobalErrors'] ?? false;
@@ -55,8 +68,9 @@ class ErrorHandler implements MiddlewareInterface
         ServerRequestInterface $request,
         RequestHandlerInterface $handler
     ): ResponseInterface {
-        $format = FormatNegotiator::fromRequest($request);
-        $errorHandler = $format->getHandler();
+        $handlerProvider = new $this->handlerProvider($request);
+        $errorHandler = $handlerProvider->getHandler();
+
         $this->applyOptions($errorHandler);
         $this->whoops->pushHandler($errorHandler);
 
@@ -73,7 +87,7 @@ class ErrorHandler implements MiddlewareInterface
             $response = $handler->handle($request);
         } catch (Throwable $e) {
             $response = $this->handleException($e)
-                ->withHeader('Content-Type', $format->getPreferredContentType());
+                ->withHeader('Content-Type', $handlerProvider->getPreferredContentType());
         }
 
         if (! $this->catchGlobalErrors) {
