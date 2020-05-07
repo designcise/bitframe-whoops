@@ -40,6 +40,17 @@ class ErrorHandler implements MiddlewareInterface
 
     private bool $catchGlobalErrors;
 
+    public static function fromNegotiator(
+        ResponseFactoryInterface $responseFactory,
+        array $options = []
+    ): self {
+        return new self(
+            $responseFactory,
+            HandlerProviderNegotiator::class,
+            $options
+        );
+    }
+
     public function __construct(
         ResponseFactoryInterface $responseFactory,
         string $handlerProvider = HandlerProviderNegotiator::class,

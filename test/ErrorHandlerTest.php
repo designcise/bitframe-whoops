@@ -10,6 +10,7 @@
 
 namespace BitFrame\Test\Http;
 
+use ReflectionObject;
 use PHPUnit\Framework\TestCase;
 use Prophecy\Argument;
 use Psr\Http\Message\{
@@ -33,6 +34,30 @@ use function http_response_code;
  */
 class ErrorHandlerTest extends TestCase
 {
+    public function testFromNegotiator(): void
+    {
+        /** @var \PHPUnit\Framework\MockObject\MockObject|ResponseFactoryInterface $factory */
+        $factory = $this->getMockBuilder(ResponseFactoryInterface::class)
+            ->getMockForAbstractClass();
+
+        $options = [
+            'catchGlobalErrors' => true,
+            'setJsonApi' => false,
+        ];
+
+        $errorHandler = ErrorHandler::fromNegotiator($factory, $options);
+
+        $errorHandlerReflection = new ReflectionObject($errorHandler);
+        $handlerProvider = $errorHandlerReflection->getProperty('handlerProvider');
+        $handlerProvider->setAccessible(true);
+
+        $this->assertSame(
+            HandlerProviderNegotiator::class,
+            $handlerProvider->getValue($errorHandler)
+        );
+        $this->assertSame($options, $errorHandler->getOptions());
+    }
+
     public function errorProvider(): array
     {
         return [
