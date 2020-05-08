@@ -28,6 +28,7 @@ use InvalidArgumentException;
 use function trigger_error;
 use function json_decode;
 use function http_response_code;
+use function get_class;
 
 /**
  * @covers \BitFrame\Whoops\ErrorHandler
@@ -56,6 +57,16 @@ class ErrorHandlerTest extends TestCase
             $handlerProvider->getValue($errorHandler)
         );
         $this->assertSame($options, $errorHandler->getOptions());
+    }
+    public function testShouldThrowExceptionWhenInvalidHandlerProviderClassProvided(): void
+    {
+        /** @var \PHPUnit\Framework\MockObject\MockObject|ResponseFactoryInterface $factory */
+        $factory = $this->getMockBuilder(ResponseFactoryInterface::class)
+            ->getMockForAbstractClass();
+
+        $this->expectException(InvalidArgumentException::class);
+
+        new ErrorHandler($factory, get_class($this));
     }
 
     public function errorProvider(): array

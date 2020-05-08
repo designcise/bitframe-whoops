@@ -65,6 +65,8 @@ class HandlerProviderNegotiatorTest extends TestCase
 
         $negotiator->add($handlerProvider, get_class($simpleHandlerProvider));
 
+        $this->assertEquals($simpleHandlerProvider->getHandler(), $negotiator->getHandler());
+
         $this->assertSame(
             $negotiator->getPreferredContentType(),
             $simpleHandlerProvider->getPreferredContentType()
@@ -143,6 +145,25 @@ class HandlerProviderNegotiatorTest extends TestCase
             HtmlHandlerProvider::class,
             $negotiator->getPreferredProvider()
         );
+    }
+
+    public function testGetsCachedProviderOnRepeatCalls(): void
+    {
+        /** @var \PHPUnit\Framework\MockObject\MockObject|ServerRequestInterface $request */
+        $request = $this->getMockBuilder(ServerRequestInterface::class)
+            ->onlyMethods(['getHeader'])
+            ->getMockForAbstractClass();
+
+        $request
+            ->method('getHeader')
+            ->with('accept')
+            ->willReturn([]);
+
+        $negotiator = new HandlerProviderNegotiator($request);
+
+        $preferredProvider = $negotiator->getPreferredProvider();
+
+        $this->assertSame($preferredProvider, $negotiator->getPreferredProvider());
     }
 
     private function getSimpleHandlerProvider(ServerRequestInterface $request): AbstractProvider
