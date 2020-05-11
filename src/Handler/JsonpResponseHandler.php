@@ -4,111 +4,135 @@
  * BitFrame Framework (https://www.bitframephp.com)
  *
  * @author    Daniyal Hamid
- * @copyright Copyright (c) 2017-2018 Daniyal Hamid (https://designcise.com)
- *
- * @author    Filipe Dobreira
- * @copyright Copyright (c) 2013-2018 Filipe Dobreira (http://github.com/filp)
- *
- * @license   https://github.com/designcise/bitframe-whoops/blob/master/LICENSE.md MIT License
+ * @copyright Copyright (c) 2017-2020 Daniyal Hamid (https://designcise.com)
+ * @license   https://bitframephp.com/about/license MIT License
  */
 
-namespace BitFrame\ErrorHandler\Handler;
+namespace BitFrame\Whoops\Handler;
 
-use \Whoops\Handler\Handler;
-use \Whoops\Exception\Formatter;
+use Whoops\Handler\Handler;
+use Whoops\Exception\Formatter;
+use InvalidArgumentException;
+
+use function json_encode;
+use function explode;
+use function preg_match;
+use function in_array;
+
+use const JSON_THROW_ON_ERROR;
+use const JSON_PARTIAL_OUTPUT_ON_ERROR;
+use const JSON_HEX_QUOT;
+use const JSON_HEX_TAG;
+use const JSON_HEX_AMP;
+use const JSON_HEX_APOS;
+use const JSON_UNESCAPED_SLASHES;
 
 /**
- * Catches an exception and converts it to a JSONP
- * response. Additionally can also return exception
- * frames for consumption by an API. Based on
- * \Whoops\Handler\JsonResponseHandler.
+ * Catches an exception and converts it to a JSONP response.
+ * Can also return exception frames for consumption by an API.
  */
 class JsonpResponseHandler extends Handler
 {
-    /** @var bool */
-    private $returnFrames = false;
-
-    /** @var bool */
-    private $jsonApi = false;
-    
     /** @var string */
-    private $callback;
+    private const MIME = 'application/json';
 
-    /**
-     * @param string $callback JSONP callback
-     */
-    public function __construct(string $callback)
-    {
-        $this->callback = $callback;
-    }
+    /** @var int */
+    private const DEFAULT_ENCODING = JSON_PARTIAL_OUTPUT_ON_ERROR
+        | JSON_THROW_ON_ERROR
+        | JSON_HEX_QUOT
+        | JSON_HEX_TAG
+        | JSON_HEX_AMP
+        | JSON_HEX_APOS
+        | JSON_UNESCAPED_SLASHES;
 
-    /**
-     * Returns errors[[]] instead of error[] to be in 
-     * compliance with the json:api spec
-     *
-     * @param bool $jsonApi Default is false
-     *
-     * @return $this
-     */
-    public function setJsonApi(bool $jsonApi = false): self
-    {
-        $this->jsonApi = (bool) $jsonApi;
-        return $this;
-    }
+    private bool $returnFrames = false;
 
-    /**
-     * @param bool|null $returnFrames
-     *
-     * @return bool|$this
-     */
-    public function addTraceToOutput(?bool $returnFrames = null)
-    {
-        if (func_num_args() == 0) {
-            return $this->returnFrames;
+    private bool $jsonApi = false;
+
+    private string $callback;
+
+    private int $encodingOptions;
+
+    public function __construct(
+        string $callback,
+        int $encodingOptions = self::DEFAULT_ENCODING
+    ) {
+        if (! $this->isCallbackValid($callback)) {
+            throw new InvalidArgumentException('Callback name is invalid');
         }
 
-        $this->returnFrames = (bool) $returnFrames;
+        $this->callback = $callback;
+        $this->encodingOptions = $encodingOptions;
+    }
+
+    public function addTraceToOutput(bool $returnFrames): self
+    {
+        $this->returnFrames = $returnFrames;
         return $this;
     }
 
     /**
-     * Handle errors.
-     *
      * @return int
      */
     public function handle(): int
     {
-        if ($this->jsonApi === true) {
-            $response = [
-                'errors' => [
-                    Formatter::formatExceptionAsDataArray(
-                        $this->getInspector(),
-                        $this->addTraceToOutput()
-                    ),
-                ]
-            ];
-        } else {
-            $response = [
-                'error' => Formatter::formatExceptionAsDataArray(
-                    $this->getInspector(),
-                    $this->addTraceToOutput()
-                ),
-            ];
-        }
+        $error = Formatter::formatExceptionAsDataArray(
+            $this->getInspector(),
+            $this->returnFrames
+        );
 
-        $json = json_encode($response, defined('JSON_PARTIAL_OUTPUT_ON_ERROR') ? JSON_PARTIAL_OUTPUT_ON_ERROR : 0);
+        $response = ($this->jsonApi) ? ['errors' => [$error]] : ['error' => $error];
+
+        $json = json_encode($response, $this->encodingOptions);
         echo "{$this->callback}($json)";
 
         return Handler::QUIT;
     }
 
-    /**
-     * Get content type.
-     * 
-     * @return string
-     */
+    public function setJsonApi(bool $jsonApi): self
+    {
+        $this->jsonApi = $jsonApi;
+        return $this;
+    }
+
+    public function setEncoding(int $encoding): self
+    {
+        $this->encodingOptions = $encoding;
+        return $this;
+    }
+
     public function contentType(): string
     {
-        return 'application/json';
+        return self::MIME;
+    }
+
+    /**
+     * @param string $callback
+     *
+     * @return bool
+     *
+     * @see \Symfony\Component\HttpFoundation\JsonResponse::setCallback()
+     */
+    private function isCallbackValid(string $callback): bool
+    {
+        $pattern = '/^[$_\p{L}][$_\p{L}\p{Mn}\p{Mc}\p{Nd}\p{Pc}\x{200C}\x{200D}]*(?:\[(?:"(?:\\\.|[^"\\\])*"|\'(?:\\\.|[^\'\\\])*\'|\d+)\])*?$/u';
+
+        $reserved = [
+            'break', 'do', 'instanceof', 'typeof', 'case', 'else', 'new', 'var', 'catch', 'finally',
+            'return','void', 'continue', 'for', 'switch', 'while', 'debugger', 'function', 'this',
+            'with', 'default', 'if', 'throw', 'delete', 'in', 'try', 'class', 'enum', 'extends', 'super',
+            'const', 'export', 'import', 'implements', 'let', 'private', 'public', 'yield', 'interface',
+            'package', 'protected', 'static', 'null', 'true', 'false',
+        ];
+
+        $parts = explode('.', $callback);
+
+        foreach ($parts as $part) {
+            if (! preg_match($pattern, $part) || in_array($part, $reserved, true)) {
+                return false;
+            }
+        }
+
+        return true;
     }
 }
