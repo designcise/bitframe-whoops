@@ -1,6 +1,5 @@
 {
     "name": "designcise/bitframe-whoops",
-    "version": "2.0.0",
     "type": "library",
     "description": "Whoops error handler middleware",
     "license": "MIT",
