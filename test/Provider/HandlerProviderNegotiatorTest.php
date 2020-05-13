@@ -109,6 +109,9 @@ class HandlerProviderNegotiatorTest extends TestCase
 
     /**
      * @dataProvider preferredHandlerProviderProvider
+     *
+     * @param string $mime
+     * @param string $expectedProvider
      */
     public function testGetPreferredProvider(string $mime, string $expectedProvider): void
     {
