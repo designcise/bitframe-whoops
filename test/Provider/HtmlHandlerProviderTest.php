@@ -45,9 +45,9 @@ class HtmlHandlerProviderTest extends TestCase
         $request->method('getQueryParams')->willReturn(['bar' => 'baz']);
         $request->method('getParsedBody')->willReturn([]);
 
-        $handlerProvider = new HtmlHandlerProvider($request);
+        $handlerProvider = new HtmlHandlerProvider();
         /** @var \Whoops\Handler\PrettyPageHandler $handler */
-        $handler = $handlerProvider->getHandler();
+        $handler = $handlerProvider->getHandler($request);
 
         $this->assertInstanceOf(HandlerInterface::class, $handler);
         $this->assertSame([
@@ -68,8 +68,8 @@ class HtmlHandlerProviderTest extends TestCase
         $request = $this->getMockBuilder(ServerRequestInterface::class)
             ->getMock();
 
-        $handler = new HtmlHandlerProvider($request);
+        $handler = new HtmlHandlerProvider();
 
-        $this->assertSame('text/html', $handler->getPreferredContentType());
+        $this->assertSame('text/html', $handler->getPreferredContentType($request));
     }
 }

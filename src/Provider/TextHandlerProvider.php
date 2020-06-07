@@ -10,19 +10,20 @@
 
 namespace BitFrame\Whoops\Provider;
 
+use Psr\Http\Message\ServerRequestInterface;
 use Whoops\Handler\{HandlerInterface, PlainTextHandler};
 
-class TextHandlerProvider extends AbstractProvider
+class TextHandlerProvider implements ProviderInterface
 {
     /** @var string[] */
     public const MIMES = ['text/plain'];
 
-    public function getHandler(): HandlerInterface
+    public function getHandler(ServerRequestInterface $request): HandlerInterface
     {
         return new PlainTextHandler();
     }
 
-    public function getPreferredContentType(): string
+    public function getPreferredContentType(ServerRequestInterface $request): string
     {
         return self::MIMES[0];
     }

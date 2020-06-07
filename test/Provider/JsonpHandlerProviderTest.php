@@ -51,26 +51,29 @@ class JsonpHandlerProviderTest extends TestCase
         string $method,
         array $query
     ): void {
-        $handlerProvider = new JsonpHandlerProvider($this->getRequest($method, $query));
+        $handlerProvider = new JsonpHandlerProvider();
 
         $this->expectException(RuntimeException::class);
 
-        $handlerProvider->getHandler();
+        $handlerProvider->getHandler($this->getRequest($method, $query));
     }
 
     public function testGetHandler(): void
     {
-        $handlerProvider = new JsonpHandlerProvider($this->getRequest());
-        $handler = $handlerProvider->getHandler();
+        $handlerProvider = new JsonpHandlerProvider();
+        $handler = $handlerProvider->getHandler($this->getRequest());
 
         $this->assertInstanceOf(HandlerInterface::class, $handler);
     }
 
     public function testGetPreferredContentType(): void
     {
-        $handler = new JsonpHandlerProvider($this->getRequest());
+        $handler = new JsonpHandlerProvider();
 
-        $this->assertSame('application/javascript', $handler->getPreferredContentType());
+        $this->assertSame(
+            'application/javascript',
+            $handler->getPreferredContentType($this->getRequest())
+        );
     }
 
     /**

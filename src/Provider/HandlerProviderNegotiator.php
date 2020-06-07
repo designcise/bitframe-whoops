@@ -23,7 +23,7 @@ use function strpos;
  * Detect any of the supported preferred formats from an
  * HTTP request.
  */
-class HandlerProviderNegotiator extends AbstractProvider
+class HandlerProviderNegotiator implements ProviderInterface
 {
     /** @var string */
     public const HTML = 'html';
@@ -48,36 +48,35 @@ class HandlerProviderNegotiator extends AbstractProvider
         self::XML => XmlHandlerProvider::class,
     ];
 
-    private ?AbstractProvider $activeProvider = null;
+    private ?ProviderInterface $activeProvider = null;
 
     public function add(string $type, string $provider): void
     {
-        if (! is_a($provider, AbstractProvider::class, true)) {
+        if (! is_a($provider, ProviderInterface::class, true)) {
             throw new InvalidArgumentException(
-                'Handler provider must be instance of ' . AbstractProvider::class
+                'Handler provider must be instance of ' . ProviderInterface::class
             );
         }
 
         $this->handlerProviders[$type] = $provider;
     }
 
-    public function getHandler(): HandlerInterface
+    public function getHandler(ServerRequestInterface $request): HandlerInterface
     {
-        return $this->getPreferredProvider()->getHandler();
+        return $this->getPreferredProvider($request)->getHandler($request);
     }
 
-    public function getPreferredContentType(): string
+    public function getPreferredContentType(ServerRequestInterface $request): string
     {
-        return $this->getPreferredProvider()->getPreferredContentType();
+        return $this->getPreferredProvider($request)->getPreferredContentType($request);
     }
 
-    public function getPreferredProvider(): AbstractProvider
+    public function getPreferredProvider(ServerRequestInterface $request): ProviderInterface
     {
-        if ($this->activeProvider instanceof AbstractProvider) {
+        if ($this->activeProvider instanceof ProviderInterface) {
             return $this->activeProvider;
         }
 
-        $request = $this->getRequest();
         $acceptTypes = $request->getHeader('accept');
         $default = $this->handlerProviders[self::HTML];
 

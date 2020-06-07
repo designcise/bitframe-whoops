@@ -28,7 +28,7 @@ new ErrorHandler(
 ```
 
 1. The first argument to the constructor must be an instance of `Psr\Http\Message\ResponseFactoryInterface`;
-1. The second argument to the constructor must be the name of the handler provider class (which extends `\BitFrame\Whoops\Provider\AbstractProvider`)
+1. The second argument to the constructor must be an implementation of `\BitFrame\Whoops\Provider\ProviderInterface`;
 1. The third argument to the constructor is an optional array of options to specify the following:
     1. `catchGlobalErrors`: When set to `true` errors will be handled outside of current batch of middleware set.
     1. Other options are simply method names in `Whoops\Handler\*Handler.php` and `BitFrame\Whoops\Handler\*Handler.php`. For example, to set `Whoops\Handler\JsonResponseHandler::setJsonApi()` you would pass in: `['setJsonApi' => false]`, etc.

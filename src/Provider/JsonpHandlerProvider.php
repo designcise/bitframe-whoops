@@ -10,18 +10,18 @@
 
 namespace BitFrame\Whoops\Provider;
 
+use Psr\Http\Message\ServerRequestInterface;
 use Whoops\Handler\HandlerInterface;
 use BitFrame\Whoops\Handler\JsonpResponseHandler;
 use RuntimeException;
 
-class JsonpHandlerProvider extends AbstractProvider
+class JsonpHandlerProvider implements ProviderInterface
 {
     /** @var string[] */
     public const MIMES = ['application/javascript'];
 
-    public function getHandler(): HandlerInterface
+    public function getHandler(ServerRequestInterface $request): HandlerInterface
     {
-        $request = $this->getRequest();
         $queryParams = $request->getQueryParams();
         $method = $request->getMethod();
 
@@ -34,7 +34,7 @@ class JsonpHandlerProvider extends AbstractProvider
         return new JsonpResponseHandler($queryParams['callback']);
     }
 
-    public function getPreferredContentType(): string
+    public function getPreferredContentType(ServerRequestInterface $request): string
     {
         return self::MIMES[0];
     }

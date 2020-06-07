@@ -10,19 +10,20 @@
 
 namespace BitFrame\Whoops\Provider;
 
+use Psr\Http\Message\ServerRequestInterface;
 use Whoops\Handler\{HandlerInterface, XmlResponseHandler};
 
-class XmlHandlerProvider extends AbstractProvider
+class XmlHandlerProvider implements ProviderInterface
 {
     /** @var string[] */
     public const MIMES = ['text/xml', 'application/xml', 'application/x-xml'];
 
-    public function getHandler(): HandlerInterface
+    public function getHandler(ServerRequestInterface $request): HandlerInterface
     {
         return new XmlResponseHandler();
     }
 
-    public function getPreferredContentType(): string
+    public function getPreferredContentType(ServerRequestInterface $request): string
     {
         return self::MIMES[0];
     }

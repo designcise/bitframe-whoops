@@ -10,9 +10,10 @@
 
 namespace BitFrame\Whoops\Provider;
 
+use Psr\Http\Message\ServerRequestInterface;
 use Whoops\Handler\{HandlerInterface, PrettyPageHandler};
 
-class HtmlHandlerProvider extends AbstractProvider
+class HtmlHandlerProvider implements ProviderInterface
 {
     /** @var string */
     public const DATA_TABLE_NAME = 'Request Data';
@@ -20,9 +21,8 @@ class HtmlHandlerProvider extends AbstractProvider
     /** @var string[] */
     public const MIMES = ['text/html', 'application/xhtml+xml'];
 
-    public function getHandler(): HandlerInterface
+    public function getHandler(ServerRequestInterface $request): HandlerInterface
     {
-        $request = $this->getRequest();
         $handler = new PrettyPageHandler();
 
         $handler->addDataTable(self::DATA_TABLE_NAME, [
@@ -39,7 +39,7 @@ class HtmlHandlerProvider extends AbstractProvider
         return $handler;
     }
 
-    public function getPreferredContentType(): string
+    public function getPreferredContentType(ServerRequestInterface $request): string
     {
         return self::MIMES[0];
     }

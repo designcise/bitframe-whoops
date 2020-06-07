@@ -31,16 +31,19 @@ class JsonHandlerProviderTest extends TestCase
 
     public function testGetHandler(): void
     {
-        $handlerProvider = new JsonHandlerProvider($this->request);
-        $handler = $handlerProvider->getHandler();
+        $handlerProvider = new JsonHandlerProvider();
+        $handler = $handlerProvider->getHandler($this->request);
 
         $this->assertInstanceOf(HandlerInterface::class, $handler);
     }
 
     public function testGetPreferredContentType(): void
     {
-        $handler = new JsonHandlerProvider($this->request);
+        $handler = new JsonHandlerProvider();
 
-        $this->assertSame('application/json', $handler->getPreferredContentType());
+        $this->assertSame(
+            'application/json',
+            $handler->getPreferredContentType($this->request)
+        );
     }
 }

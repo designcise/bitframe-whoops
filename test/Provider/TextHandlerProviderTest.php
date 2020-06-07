@@ -31,16 +31,19 @@ class TextHandlerProviderTest extends TestCase
 
     public function testGetHandler(): void
     {
-        $handlerProvider = new TextHandlerProvider($this->request);
-        $handler = $handlerProvider->getHandler();
+        $handlerProvider = new TextHandlerProvider();
+        $handler = $handlerProvider->getHandler($this->request);
 
         $this->assertInstanceOf(HandlerInterface::class, $handler);
     }
 
     public function testGetPreferredContentType(): void
     {
-        $handler = new TextHandlerProvider($this->request);
+        $handler = new TextHandlerProvider();
 
-        $this->assertSame('text/plain', $handler->getPreferredContentType());
+        $this->assertSame(
+            'text/plain',
+            $handler->getPreferredContentType($this->request)
+        );
     }
 }

@@ -13,7 +13,7 @@ namespace BitFrame\Whoops;
 use Psr\Http\Message\{ResponseFactoryInterface, ServerRequestInterface, ResponseInterface};
 use Psr\Http\Server\{RequestHandlerInterface, MiddlewareInterface};
 use Whoops\{Run, RunInterface};
-use BitFrame\Whoops\Provider\{AbstractProvider, HandlerProviderNegotiator};
+use BitFrame\Whoops\Provider\{HandlerProviderNegotiator, ProviderInterface};
 use Throwable;
 use InvalidArgumentException;
 
@@ -34,7 +34,8 @@ class ErrorHandler implements MiddlewareInterface
 
     private ResponseFactoryInterface $responseFactory;
 
-    private string $handlerProvider;
+    /** @var ProviderInterface|string */
+    private $handlerProvider;
 
     private array $options;
 
@@ -51,17 +52,22 @@ class ErrorHandler implements MiddlewareInterface
         );
     }
 
+    /**
+     * @param ResponseFactoryInterface $responseFactory
+     * @param string|ProviderInterface $handlerProvider
+     * @param array $options
+     */
     public function __construct(
         ResponseFactoryInterface $responseFactory,
-        string $handlerProvider = HandlerProviderNegotiator::class,
+        $handlerProvider = HandlerProviderNegotiator::class,
         array $options = []
     ) {
         $this->responseFactory = $responseFactory;
         $this->handlerProvider = $handlerProvider;
 
-        if (! is_a($this->handlerProvider, AbstractProvider::class, true)) {
+        if (! is_a($this->handlerProvider, ProviderInterface::class, true)) {
             throw new InvalidArgumentException(
-                'Handler provider must be instance of ' . AbstractProvider::class
+                'Handler provider must be instance of ' . ProviderInterface::class
             );
         }
 
@@ -79,8 +85,10 @@ class ErrorHandler implements MiddlewareInterface
         ServerRequestInterface $request,
         RequestHandlerInterface $handler
     ): ResponseInterface {
-        $handlerProvider = new $this->handlerProvider($request);
-        $errorHandler = $handlerProvider->getHandler();
+        $handlerProvider = ($this->handlerProvider instanceof ProviderInterface)
+            ? $this->handlerProvider
+            : new $this->handlerProvider();
+        $errorHandler = $handlerProvider->getHandler($request);
 
         $this->applyOptions($errorHandler);
         $this->whoops->pushHandler($errorHandler);
@@ -98,7 +106,7 @@ class ErrorHandler implements MiddlewareInterface
             $response = $handler->handle($request);
         } catch (Throwable $e) {
             $response = $this->handleException($e)
-                ->withHeader('Content-Type', $handlerProvider->getPreferredContentType());
+                ->withHeader('Content-Type', $handlerProvider->getPreferredContentType($request));
         }
 
         if (! $this->catchGlobalErrors) {

@@ -130,7 +130,7 @@ class ErrorHandlerTest extends TestCase
             );
 
         $middlewares = [
-            new ErrorHandler($responseFactory->reveal(), HandlerProviderNegotiator::class, [
+            new ErrorHandler($responseFactory->reveal(), new HandlerProviderNegotiator(), [
                 'setJsonApi' => false,
             ]),
             $middleware,

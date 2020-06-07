@@ -14,7 +14,7 @@ use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ServerRequestInterface;
 use Whoops\Handler\{HandlerInterface, Handler};
 use BitFrame\Whoops\Provider\{
-    AbstractProvider,
+    ProviderInterface,
     HandlerProviderNegotiator,
     HtmlHandlerProvider,
     JsonHandlerProvider,
@@ -61,15 +61,15 @@ class HandlerProviderNegotiatorTest extends TestCase
             ->willReturn(['text/made-up']);
 
         $simpleHandlerProvider = $this->getSimpleHandlerProvider($request);
-        $negotiator = new HandlerProviderNegotiator($request);
+        $negotiator = new HandlerProviderNegotiator();
 
         $negotiator->add($handlerProvider, get_class($simpleHandlerProvider));
 
-        $this->assertEquals($simpleHandlerProvider->getHandler(), $negotiator->getHandler());
+        $this->assertEquals($simpleHandlerProvider->getHandler($request), $negotiator->getHandler($request));
 
         $this->assertSame(
-            $negotiator->getPreferredContentType(),
-            $simpleHandlerProvider->getPreferredContentType()
+            $negotiator->getPreferredContentType($request),
+            $simpleHandlerProvider->getPreferredContentType($request)
         );
     }
 
@@ -125,9 +125,9 @@ class HandlerProviderNegotiatorTest extends TestCase
             ->with('accept')
             ->willReturn([$mime]);
 
-        $negotiator = new HandlerProviderNegotiator($request);
+        $negotiator = new HandlerProviderNegotiator();
 
-        $this->assertInstanceOf($expectedProvider, $negotiator->getPreferredProvider());
+        $this->assertInstanceOf($expectedProvider, $negotiator->getPreferredProvider($request));
     }
 
     public function testGetsDefaultProviderWhenAcceptHeaderNotPresent(): void
@@ -142,11 +142,11 @@ class HandlerProviderNegotiatorTest extends TestCase
             ->with('accept')
             ->willReturn([]);
 
-        $negotiator = new HandlerProviderNegotiator($request);
+        $negotiator = new HandlerProviderNegotiator();
 
         $this->assertInstanceOf(
             HtmlHandlerProvider::class,
-            $negotiator->getPreferredProvider()
+            $negotiator->getPreferredProvider($request)
         );
     }
 
@@ -162,19 +162,19 @@ class HandlerProviderNegotiatorTest extends TestCase
             ->with('accept')
             ->willReturn([]);
 
-        $negotiator = new HandlerProviderNegotiator($request);
+        $negotiator = new HandlerProviderNegotiator();
 
-        $preferredProvider = $negotiator->getPreferredProvider();
+        $preferredProvider = $negotiator->getPreferredProvider($request);
 
-        $this->assertSame($preferredProvider, $negotiator->getPreferredProvider());
+        $this->assertSame($preferredProvider, $negotiator->getPreferredProvider($request));
     }
 
-    private function getSimpleHandlerProvider(ServerRequestInterface $request): AbstractProvider
+    private function getSimpleHandlerProvider(ServerRequestInterface $request): ProviderInterface
     {
-        return new class ($request) extends AbstractProvider {
+        return new class () implements ProviderInterface {
             public const MIMES = ['text/made-up'];
 
-            public function getHandler(): HandlerInterface
+            public function getHandler(ServerRequestInterface $request): HandlerInterface
             {
                 return new class extends Handler {
                     public function handle()
@@ -193,8 +193,9 @@ class HandlerProviderNegotiatorTest extends TestCase
                 };
             }
 
-            public function getPreferredContentType(): string
-            {
+            public function getPreferredContentType(
+                ServerRequestInterface $request
+            ): string {
                 return self::MIMES[0];
             }
         };

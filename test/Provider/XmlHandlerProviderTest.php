@@ -31,16 +31,19 @@ class XmlHandlerProviderTest extends TestCase
 
     public function testGetHandler(): void
     {
-        $handlerProvider = new XmlHandlerProvider($this->request);
-        $handler = $handlerProvider->getHandler();
+        $handlerProvider = new XmlHandlerProvider();
+        $handler = $handlerProvider->getHandler($this->request);
 
         $this->assertInstanceOf(HandlerInterface::class, $handler);
     }
 
     public function testGetPreferredContentType(): void
     {
-        $handler = new XmlHandlerProvider($this->request);
+        $handler = new XmlHandlerProvider();
 
-        $this->assertSame('text/xml', $handler->getPreferredContentType());
+        $this->assertSame(
+            'text/xml',
+            $handler->getPreferredContentType($this->request)
+        );
     }
 }

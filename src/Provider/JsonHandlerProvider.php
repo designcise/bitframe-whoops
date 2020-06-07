@@ -10,19 +10,20 @@
 
 namespace BitFrame\Whoops\Provider;
 
+use Psr\Http\Message\ServerRequestInterface;
 use Whoops\Handler\{HandlerInterface, JsonResponseHandler};
 
-class JsonHandlerProvider extends AbstractProvider
+class JsonHandlerProvider implements ProviderInterface
 {
     /** @var string[] */
     public const MIMES = ['application/json', 'text/json', 'application/x-json'];
 
-    public function getHandler(): HandlerInterface
+    public function getHandler(ServerRequestInterface $request): HandlerInterface
     {
         return new JsonResponseHandler();
     }
 
-    public function getPreferredContentType(): string
+    public function getPreferredContentType(ServerRequestInterface $request): string
     {
         return self::MIMES[0];
     }
