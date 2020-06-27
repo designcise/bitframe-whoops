@@ -8,6 +8,8 @@
  * @license   https://bitframephp.com/about/license MIT License
  */
 
+declare(strict_types=1);
+
 namespace BitFrame\Whoops\Handler;
 
 use Whoops\Handler\Handler;
