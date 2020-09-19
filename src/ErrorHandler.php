@@ -125,11 +125,6 @@ class ErrorHandler implements MiddlewareInterface
         return $response;
     }
 
-    public function getOptions(): array
-    {
-        return $this->options;
-    }
-
     public function handleException(Throwable $exception): string
     {
         $inspector = new Inspector($exception);
@@ -187,16 +182,6 @@ class ErrorHandler implements MiddlewareInterface
         ?int $line = null
     ): bool {
         if ($level & $this->system->getErrorReportingLevel()) {
-            $silencedErrors = $this->whoops->getSilenceErrorsInPaths();
-            foreach ($silencedErrors as $entry) {
-                $pathMatches = (bool) preg_match($entry['pattern'], $file);
-                $levelMatches = $level & $entry['levels'];
-                if ($pathMatches && $levelMatches) {
-                    // ignore the error, abort handling @see https://github.com/filp/whoops/issues/418
-                    return true;
-                }
-            }
-
             // XXX we pass `$level` for the "code" param only for BC reasons.
             // @see https://github.com/filp/whoops/issues/267
             $exception = new ErrorException($message, /*code*/ $level, /*severity*/ $level, $file, $line);
@@ -224,6 +209,11 @@ class ErrorHandler implements MiddlewareInterface
             $this->whoops->allowQuit(false);
             $this->handleError($error['type'], $error['message'], $error['file'], $error['line']);
         }
+    }
+
+    public function getOptions(): array
+    {
+        return $this->options;
     }
 
     private function writeToOutputNow(string $output): self
