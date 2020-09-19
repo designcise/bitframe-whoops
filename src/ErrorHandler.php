@@ -14,16 +14,16 @@ namespace BitFrame\Whoops;
 
 use Psr\Http\Message\{ResponseFactoryInterface, ServerRequestInterface, ResponseInterface};
 use Psr\Http\Server\{RequestHandlerInterface, MiddlewareInterface};
-use Whoops\{Run, RunInterface};
+use Whoops\{Exception\ErrorException, Exception\Inspector, Handler\Handler, Run, RunInterface};
+use Whoops\Util\{SystemFacade, Misc};
 use BitFrame\Whoops\Provider\{HandlerProviderNegotiator, ProviderInterface};
 use Throwable;
 use InvalidArgumentException;
 
 use function is_a;
-use function set_error_handler;
-use function restore_error_handler;
-use function ob_start;
-use function ob_get_clean;
+use function array_reverse;
+use function in_array;
+use function preg_match;
 
 class ErrorHandler implements MiddlewareInterface
 {
@@ -31,6 +31,8 @@ class ErrorHandler implements MiddlewareInterface
 
     /** @var int */
     private const STATUS_INTERNAL_SERVER_ERROR = 500;
+
+    private SystemFacade $system;
 
     private RunInterface $whoops;
 
@@ -42,6 +44,8 @@ class ErrorHandler implements MiddlewareInterface
     private array $options;
 
     private bool $catchGlobalErrors;
+
+    private bool $canThrowExceptions = true;
 
     public static function fromNegotiator(
         ResponseFactoryInterface $responseFactory,
@@ -77,7 +81,8 @@ class ErrorHandler implements MiddlewareInterface
         $this->catchGlobalErrors = $options['catchGlobalErrors'] ?? false;
         unset($options['catchGlobalErrors']);
 
-        $this->whoops = new Run();
+        $this->system = new SystemFacade();
+        $this->whoops = new Run($this->system);
     }
 
     /**
@@ -87,6 +92,13 @@ class ErrorHandler implements MiddlewareInterface
         ServerRequestInterface $request,
         RequestHandlerInterface $handler
     ): ResponseInterface {
+        $this->whoops->allowQuit(true);
+        $this->whoops->writeToOutput(true);
+
+        $this->system->setErrorHandler([$this, 'handleError']);
+        $this->system->setExceptionHandler([$this, 'handleException']);
+        $this->system->registerShutdownFunction([$this, 'handleShutdown']);
+
         $handlerProvider = ($this->handlerProvider instanceof ProviderInterface)
             ? $this->handlerProvider
             : new $this->handlerProvider();
@@ -95,24 +107,11 @@ class ErrorHandler implements MiddlewareInterface
         $this->applyOptions($errorHandler);
         $this->whoops->pushHandler($errorHandler);
 
-        $this->whoops->allowQuit(false);
-        $this->whoops->writeToOutput(true);
-
-        if ($this->catchGlobalErrors) {
-            $this->whoops->register();
-        } else {
-            set_error_handler([$this->whoops, Run::ERROR_HANDLER]);
-        }
-
-        try {
-            $response = $handler->handle($request);
-        } catch (Throwable $e) {
-            $response = $this->handleException($e)
-                ->withHeader('Content-Type', $handlerProvider->getPreferredContentType($request));
-        }
+        $response = $handler->handle($request);
 
         if (! $this->catchGlobalErrors) {
-            restore_error_handler();
+            $this->system->restoreErrorHandler();
+            $this->system->restoreExceptionHandler();
         }
 
         return $response;
@@ -123,17 +122,136 @@ class ErrorHandler implements MiddlewareInterface
         return $this->options;
     }
 
-    private function handleException(Throwable $exception): ResponseInterface
+    public function handleException(Throwable $exception): string
+    {
+        $inspector = new Inspector($exception);
+
+        $this->system->startOutputBuffering();
+
+        $handlerResponse = null;
+        $handlerContentType = null;
+        $handlerStack = array_reverse($this->whoops->getHandlers());
+
+        try {
+            foreach ($handlerStack as $handler) {
+                $handler->setRun($this->whoops);
+                $handler->setInspector($inspector);
+                $handler->setException($exception);
+
+                $handlerResponse = $handler->handle();
+
+                if (in_array($handlerResponse, [Handler::LAST_HANDLER, Handler::QUIT])) {
+                    break;
+                }
+            }
+
+            $willQuit = $handlerResponse === Handler::QUIT && $this->whoops->allowQuit();
+        } finally {
+            $output = $this->system->cleanOutputBuffer();
+        }
+
+        if ($this->whoops->writeToOutput()) {
+            if ($willQuit) {
+                $this->cleanAllOutputBuffers();
+            }
+
+            $this->writeToOutputNow($output);
+        }
+
+        if ($willQuit) {
+            // HHVM fix for https://github.com/facebook/hhvm/issues/4055
+            $this->system->flushOutputBuffer();
+
+            $this->system->stopExecution(1);
+        }
+
+        return $output;
+    }
+
+    /**
+     * @param int $level
+     * @param string $message
+     * @param null|string $file
+     * @param null|int $line
+     *
+     * @return bool
+     * @throws ErrorException
+     */
+    public function handleError(
+        int $level,
+        string $message,
+        ?string $file = null,
+        ?int $line = null
+    ): bool {
+        if ($level & $this->system->getErrorReportingLevel()) {
+            $silencedErrors = $this->whoops->getSilenceErrorsInPaths();
+            foreach ($silencedErrors as $entry) {
+                $pathMatches = (bool) preg_match($entry['pattern'], $file);
+                $levelMatches = $level & $entry['levels'];
+                if ($pathMatches && $levelMatches) {
+                    // ignore the error, abort handling @see https://github.com/filp/whoops/issues/418
+                    return true;
+                }
+            }
+
+            // XXX we pass `$level` for the "code" param only for BC reasons.
+            // @see https://github.com/filp/whoops/issues/267
+            $exception = new ErrorException($message, /*code*/ $level, /*severity*/ $level, $file, $line);
+            if ($this->canThrowExceptions) {
+                throw $exception;
+            } else {
+                $this->handleException($exception);
+            }
+
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * @throws ErrorException
+     */
+    public function handleShutdown()
+    {
+        $this->canThrowExceptions = false;
+
+        $error = $this->system->getLastError();
+        if ($error && Misc::isLevelFatal($error['type'])) {
+            $this->whoops->allowQuit(false);
+            $this->handleError($error['type'], $error['message'], $error['file'], $error['line']);
+        }
+    }
+
+    private function cleanAllOutputBuffers(): void
+    {
+        while ($this->system->getOutputBufferLevel() > 0) {
+            $this->system->endOutputBuffering();
+        }
+    }
+
+    private function writeToOutputNow(string $output): self
+    {
+        $statusCode = $this->getStatusCode();
+
+        if ($this->whoops->sendHttpCode($statusCode) && Misc::canSendHeaders()) {
+            $this->system->setHttpResponseCode(
+                $this->whoops->sendHttpCode($statusCode)
+            );
+        }
+
+        echo $output;
+
+        return $this;
+    }
+
+    private function getStatusCode(): int
     {
         $statusCode = http_response_code();
 
-        ob_start();
-        $this->whoops->{Run::EXCEPTION_HANDLER}($exception);
-        $response = $this->responseFactory->createResponse(
-            ($statusCode < 400 || $statusCode > 600) ? self::STATUS_INTERNAL_SERVER_ERROR : $statusCode
-        );
-        $response->getBody()->write(ob_get_clean());
-
-        return $response;
+        if ($statusCode < 400 || $statusCode > 600) {
+            $statusCode = self::STATUS_INTERNAL_SERVER_ERROR;
+        }
+        return $statusCode;
     }
 }
