@@ -24,6 +24,7 @@ use function is_a;
 use function array_reverse;
 use function in_array;
 use function preg_match;
+use function method_exists;
 
 class ErrorHandler implements MiddlewareInterface
 {
@@ -92,8 +93,8 @@ class ErrorHandler implements MiddlewareInterface
         ServerRequestInterface $request,
         RequestHandlerInterface $handler
     ): ResponseInterface {
-        $this->whoops->allowQuit(true);
-        $this->whoops->writeToOutput(true);
+        $this->whoops->allowQuit(false);
+        $this->whoops->writeToOutput($this->catchGlobalErrors);
 
         $this->system->setErrorHandler([$this, 'handleError']);
         $this->system->setExceptionHandler([$this, 'handleException']);
@@ -107,7 +108,14 @@ class ErrorHandler implements MiddlewareInterface
         $this->applyOptions($errorHandler);
         $this->whoops->pushHandler($errorHandler);
 
-        $response = $handler->handle($request);
+        try {
+            $response = $handler->handle($request);
+        } catch (Throwable $e) {
+            $output = $this->handleException($e);
+
+            $response = $this->responseFactory->createResponse($this->getStatusCode());
+            $response->getBody()->write($output);
+        }
 
         if (! $this->catchGlobalErrors) {
             $this->system->restoreErrorHandler();
@@ -140,29 +148,24 @@ class ErrorHandler implements MiddlewareInterface
 
                 $handlerResponse = $handler->handle();
 
+                $handlerContentType = method_exists($handler, 'contentType')
+                    ? $handler->contentType()
+                    : null;
+
                 if (in_array($handlerResponse, [Handler::LAST_HANDLER, Handler::QUIT])) {
                     break;
                 }
             }
-
-            $willQuit = $handlerResponse === Handler::QUIT && $this->whoops->allowQuit();
         } finally {
             $output = $this->system->cleanOutputBuffer();
         }
 
         if ($this->whoops->writeToOutput()) {
-            if ($willQuit) {
-                $this->cleanAllOutputBuffers();
+            if (Misc::canSendHeaders() && $handlerContentType) {
+                header("Content-Type: {$handlerContentType}");
             }
 
             $this->writeToOutputNow($output);
-        }
-
-        if ($willQuit) {
-            // HHVM fix for https://github.com/facebook/hhvm/issues/4055
-            $this->system->flushOutputBuffer();
-
-            $this->system->stopExecution(1);
         }
 
         return $output;
@@ -220,13 +223,6 @@ class ErrorHandler implements MiddlewareInterface
         if ($error && Misc::isLevelFatal($error['type'])) {
             $this->whoops->allowQuit(false);
             $this->handleError($error['type'], $error['message'], $error['file'], $error['line']);
-        }
-    }
-
-    private function cleanAllOutputBuffers(): void
-    {
-        while ($this->system->getOutputBufferLevel() > 0) {
-            $this->system->endOutputBuffering();
         }
     }
 
