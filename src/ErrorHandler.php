@@ -23,7 +23,6 @@ use InvalidArgumentException;
 use function is_a;
 use function array_reverse;
 use function in_array;
-use function preg_match;
 use function method_exists;
 
 class ErrorHandler implements MiddlewareInterface
@@ -187,10 +186,9 @@ class ErrorHandler implements MiddlewareInterface
             $exception = new ErrorException($message, /*code*/ $level, /*severity*/ $level, $file, $line);
             if ($this->canThrowExceptions) {
                 throw $exception;
-            } else {
-                $this->handleException($exception);
             }
 
+            $this->handleException($exception);
             return true;
         }
 
