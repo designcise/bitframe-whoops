@@ -10,25 +10,26 @@
 
 declare(strict_types=1);
 
-namespace BitFrame\Test\Http;
+namespace BitFrame\Whoops\Test;
 
-use BitFrame\Whoops\Provider\ProviderInterface;
 use ReflectionObject;
 use PHPUnit\Framework\TestCase;
-use Prophecy\Argument;
+use Mockery;
 use Psr\Http\Message\{
     ResponseFactoryInterface,
     ServerRequestInterface,
     ResponseInterface,
     StreamInterface
 };
-use Whoops\Exception\ErrorException;
 use BitFrame\Whoops\Test\Asset\MiddlewareHandler;
 use BitFrame\Whoops\ErrorHandler;
 use BitFrame\Whoops\Provider\HandlerProviderNegotiator;
 use InvalidArgumentException;
+use Whoops\Handler\{Handler, HandlerInterface};
+use Whoops\RunInterface;
+use Whoops\Util\SystemFacade;
+use Whoops\Exception\ErrorException;
 
-use Whoops\Handler\HandlerInterface;
 use function trigger_error;
 use function json_decode;
 use function http_response_code;
@@ -39,6 +40,11 @@ use function get_class;
  */
 class ErrorHandlerTest extends TestCase
 {
+    public function tearDown(): void
+    {
+        Mockery::close();
+    }
+
     public function testFromNegotiator(): void
     {
         /** @var \PHPUnit\Framework\MockObject\MockObject|ResponseFactoryInterface $factory */
@@ -62,6 +68,7 @@ class ErrorHandlerTest extends TestCase
         );
         $this->assertSame($options, $errorHandler->getOptions());
     }
+
     public function testShouldThrowExceptionWhenInvalidHandlerProviderClassProvided(): void
     {
         /** @var \PHPUnit\Framework\MockObject\MockObject|ResponseFactoryInterface $factory */
@@ -97,55 +104,27 @@ class ErrorHandlerTest extends TestCase
      */
     public function testProcess(callable $middleware, array $expectedError): void
     {
-        /** @var \Prophecy\Prophecy\ObjectProphecy|ServerRequestInterface $request */
-        $request = $this->prophesize(ServerRequestInterface::class);
-        $request->getHeader('accept')->willReturn(['application/json']);
+        $request = $this->getMockedJsonRequest();
 
         $phpunit = $this;
-
-        /** @var \Prophecy\Prophecy\ObjectProphecy|StreamInterface $stream */
-        $stream = $this->prophesize(StreamInterface::class);
-        $stream->write(Argument::any())->will(
-            function ($args) use ($stream, $phpunit, $expectedError) {
-                $error = json_decode($args[0], true)['error'] ?? [];
-
-                $phpunit->assertSame($expectedError['type'], $error['type']);
-                $phpunit->assertSame($expectedError['message'], $error['message']);
-
-                return $stream->reveal();
-            }
-        );
-
-        /** @var \Prophecy\Prophecy\ObjectProphecy|ResponseInterface $response */
-        $response = $this->prophesize(ResponseInterface::class);
-        $response->withHeader('Content-Type', 'application/json')->willReturn($response->reveal());
-        $response->getBody()->willReturn($stream);
-
-        /** @var \Prophecy\Prophecy\ObjectProphecy|ResponseFactoryInterface $responseFactory */
-        $responseFactory = $this->prophesize(ResponseFactoryInterface::class);
-        $responseFactory
-            ->createResponse(Argument::any(), Argument::any())
-            ->will(
-                function ($args) use ($response, $phpunit, $expectedError) {
-                    $phpunit->assertSame($expectedError['status'], $args[0]);
-
-                    return $response->reveal();
-                }
-            );
+        $stream = $this->getMockedErrorMsgStream($phpunit, $expectedError);
+        $response = $this->getMockedResponseWithStream($stream);
+        $responseFactory = $this->getMockedResponseFactory(function ($status) use ($response, $phpunit, $expectedError) {
+            $phpunit->assertSame($expectedError['status'], $status);
+            return $response;
+        });
 
         $middlewares = [
-            new ErrorHandler($responseFactory->reveal(), new HandlerProviderNegotiator(), [
+            new ErrorHandler($responseFactory, new HandlerProviderNegotiator(), [
                 'setJsonApi' => false,
             ]),
             $middleware,
         ];
 
-        /** @var \Prophecy\Prophecy\ObjectProphecy|ResponseFactoryInterface $responseFactory */
-        $responseFactory2 = $this->prophesize(ResponseFactoryInterface::class);
-        $responseFactory2->createResponse(Argument::any(), Argument::any())->willReturn($response->reveal());
+        $responseFactory2 = $this->getMockedResponseFactory($response);
 
-        $handler = new MiddlewareHandler($middlewares, $responseFactory2->reveal());
-        $response = $handler->handle($request->reveal());
+        $handler = new MiddlewareHandler($middlewares, $responseFactory2);
+        $response = $handler->handle($request);
 
         $this->assertInstanceOf(ResponseInterface::class, $response);
     }
@@ -155,9 +134,7 @@ class ErrorHandlerTest extends TestCase
      */
     public function testCatchGlobalErrors(): void
     {
-        /** @var \Prophecy\Prophecy\ObjectProphecy|ServerRequestInterface $request */
-        $request = $this->prophesize(ServerRequestInterface::class);
-        $request->getHeader('accept')->willReturn(['application/json']);
+        $request = $this->getMockedJsonRequest();
 
         $phpunit = $this;
         $expectedError = [
@@ -166,38 +143,15 @@ class ErrorHandlerTest extends TestCase
             'message' => 'random exception',
         ];
 
-        /** @var \Prophecy\Prophecy\ObjectProphecy|StreamInterface $stream */
-        $stream = $this->prophesize(StreamInterface::class);
-        $stream->write(Argument::any())->will(
-            function ($args) use ($stream, $phpunit, $expectedError) {
-                $error = json_decode($args[0], true)['error'] ?? [];
-
-                $phpunit->assertSame($expectedError['type'], $error['type']);
-                $phpunit->assertSame($expectedError['message'], $error['message']);
-
-                return $stream->reveal();
-            }
-        );
-
-        /** @var \Prophecy\Prophecy\ObjectProphecy|ResponseInterface $response */
-        $response = $this->prophesize(ResponseInterface::class);
-        $response->withHeader('Content-Type', 'application/json')->willReturn($response->reveal());
-        $response->getBody()->willReturn($stream);
-
-        /** @var \Prophecy\Prophecy\ObjectProphecy|ResponseFactoryInterface $responseFactory */
-        $responseFactory = $this->prophesize(ResponseFactoryInterface::class);
-        $responseFactory
-            ->createResponse(Argument::any(), Argument::any())
-            ->will(
-                function ($args) use ($response, $phpunit, $expectedError) {
-                    $phpunit->assertSame($expectedError['status'], $args[0]);
-
-                    return $response->reveal();
-                }
-            );
+        $stream = $this->getMockedErrorMsgStream($phpunit, $expectedError);
+        $response = $this->getMockedResponseWithStream($stream);
+        $responseFactory = $this->getMockedResponseFactory(function ($status) use ($response, $phpunit, $expectedError) {
+            $phpunit->assertSame($expectedError['status'], $status);
+            return $response;
+        });
 
         $middlewares = [
-            new ErrorHandler($responseFactory->reveal(), HandlerProviderNegotiator::class, [
+            new ErrorHandler($responseFactory, HandlerProviderNegotiator::class, [
                 'catchGlobalErrors' => true,
                 'setJsonApi' => false,
             ]),
@@ -207,30 +161,146 @@ class ErrorHandlerTest extends TestCase
             },
         ];
 
-        /** @var \Prophecy\Prophecy\ObjectProphecy|ResponseFactoryInterface $responseFactory */
-        $responseFactory2 = $this->prophesize(ResponseFactoryInterface::class);
-        $responseFactory2->createResponse(Argument::any(), Argument::any())->willReturn($response->reveal());
+        $responseFactory2 = $this->getMockedResponseFactory($response);
 
-        $handler = new MiddlewareHandler($middlewares, $responseFactory2->reveal());
-        $response = $handler->handle($request->reveal());
+        $handler = new MiddlewareHandler($middlewares, $responseFactory2);
+        $response = $handler->handle($request);
 
         $this->assertInstanceOf(ResponseInterface::class, $response);
+        $this->expectOutputRegex('/.*"error":{"type":"InvalidArgumentException","message":"random exception",.*/');
+    }
+
+    /**
+     * @runInSeparateProcess
+     */
+    public function testHandleShutdown(): void
+    {
+        /** @var \PHPUnit\Framework\MockObject\MockObject|ResponseFactoryInterface $factory */
+        $factory = $this->getMockBuilder(ResponseFactoryInterface::class)
+            ->getMockForAbstractClass();
+
+        $errorHandler = new ErrorHandler(
+            $factory,
+            HandlerProviderNegotiator::class,
+            ['catchGlobalErrors' => true]
+        );
+
+        /** @var Mockery\Mock|SystemFacade $system */
+        $system = Mockery::mock(SystemFacade::class)->makePartial();
+        $system->shouldReceive('getLastError')->andReturn([
+            'type' => E_ERROR,
+            'message' => 'Undefined variable: x',
+            'file' => 'path/to/file/index.php',
+            'line' => 2,
+        ]);
+        $system->shouldReceive('getErrorReportingLevel')->andReturn(E_ALL);
+
+        /** @var Mockery\Mock|HandlerInterface $handler */
+        $handler = Mockery::mock(Handler::class)->makePartial();;
+        $handler->shouldReceive('handle')->andReturnUsing(function() {
+            echo 'foobar';
+            return Handler::QUIT;
+        });
+
+        /** @var Mockery\Mock|RunInterface $run */
+        $run = Mockery::mock(RunInterface::class)->makePartial();
+        $run->shouldReceive('writeToOutput')->andReturn(true);
+        $run->shouldReceive('sendHttpCode')->andReturn(500);
+        $run->shouldReceive('getHandlers')->andReturn([$handler]);
+
+        $errorHandlerReflection = new ReflectionObject($errorHandler);
+        $systemProp = $errorHandlerReflection->getProperty('system');
+        $systemProp->setAccessible(true);
+
+        $whoopsProp = $errorHandlerReflection->getProperty('whoops');
+        $whoopsProp->setAccessible(true);
+
+        $systemProp->setValue($errorHandler, $system);
+        $whoopsProp->setValue($errorHandler, $run);
+
+        $errorHandler->handleShutdown();
+
+        $this->expectOutputString('foobar');
     }
 
     public function testGetOptions(): void
     {
-        $responseFactory = $this->prophesize(ResponseFactoryInterface::class);
+        $responseFactory = Mockery::mock(ResponseFactoryInterface::class);
         $options = [
             'addTraceToOutput' => true,
             'setJsonApi' => false,
         ];
 
         $errorHandler = new ErrorHandler(
-            $responseFactory->reveal(),
+            $responseFactory,
             HandlerProviderNegotiator::class,
             $options
         );
 
         $this->assertSame($options, $errorHandler->getOptions());
+    }
+
+    /**
+     * @param TestCase $phpunit
+     * @param array $expectedError
+     * @return Mockery\Mock|StreamInterface
+     */
+    protected function getMockedErrorMsgStream(TestCase $phpunit, array $expectedError)
+    {
+        /** @var Mockery\Mock|StreamInterface $stream */
+        $stream = Mockery::mock(StreamInterface::class)->makePartial();
+        $stream->shouldReceive('write')->withAnyArgs()->andReturnUsing(
+            function ($exception) use ($stream, $phpunit, $expectedError) {
+                $error = json_decode($exception, true)['error'] ?? [];
+
+                $phpunit->assertSame($expectedError['type'], $error['type']);
+                $phpunit->assertSame($expectedError['message'], $error['message']);
+
+                return $stream;
+            }
+        );
+        
+        return $stream;
+    }
+
+    /**
+     * @param StreamInterface $stream
+     * @return Mockery\Mock|ResponseInterface
+     */
+    protected function getMockedResponseWithStream(StreamInterface $stream)
+    {
+        /** @var Mockery\Mock|ResponseInterface $response */
+        $response = Mockery::mock(ResponseInterface::class)->makePartial();
+        $response->allows()->withHeader('Content-Type', 'application/json')->andReturnSelf();
+        $response->shouldReceive('getBody')->andReturn($stream);
+        return $response;
+    }
+
+    /**
+     * @return Mockery\Mock|ServerRequestInterface
+     */
+    protected function getMockedJsonRequest()
+    {
+        /** @var Mockery\Mock|ServerRequestInterface $request */
+        $request = Mockery::mock(ServerRequestInterface::class)->makePartial();
+        $request->allows()->getHeader('accept')->andReturns(['application/json']);
+        return $request;
+    }
+
+    /**
+     * @param mixed $willReturn
+     *
+     * @return Mockery\Mock|ResponseFactoryInterface
+     */
+    protected function getMockedResponseFactory($return)
+    {
+        /** @var Mockery\Mock|ResponseFactoryInterface $responseFactory */
+        $responseFactory = Mockery::mock(ResponseFactoryInterface::class)->makePartial();
+        if (is_callable($return)) {
+            $responseFactory->allows()->createResponse()->withAnyArgs()->andReturnUsing($return);
+        } else {
+            $responseFactory->allows()->createResponse()->withAnyArgs()->andReturns($return);
+        }
+        return $responseFactory;
     }
 }

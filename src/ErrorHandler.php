@@ -204,7 +204,6 @@ class ErrorHandler implements MiddlewareInterface
 
         $error = $this->system->getLastError();
         if ($error && Misc::isLevelFatal($error['type'])) {
-            $this->whoops->allowQuit(false);
             $this->handleError($error['type'], $error['message'], $error['file'], $error['line']);
         }
     }
