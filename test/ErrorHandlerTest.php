@@ -12,6 +12,7 @@ declare(strict_types=1);
 
 namespace BitFrame\Whoops\Test;
 
+use PHPUnit\Framework\MockObject\MockObject;
 use ReflectionObject;
 use PHPUnit\Framework\TestCase;
 use Mockery;
@@ -47,7 +48,7 @@ class ErrorHandlerTest extends TestCase
 
     public function testFromNegotiator(): void
     {
-        /** @var \PHPUnit\Framework\MockObject\MockObject|ResponseFactoryInterface $factory */
+        /** @var MockObject|ResponseFactoryInterface $factory */
         $factory = $this->getMockBuilder(ResponseFactoryInterface::class)
             ->getMockForAbstractClass();
 
@@ -71,7 +72,7 @@ class ErrorHandlerTest extends TestCase
 
     public function testShouldThrowExceptionWhenInvalidHandlerProviderClassProvided(): void
     {
-        /** @var \PHPUnit\Framework\MockObject\MockObject|ResponseFactoryInterface $factory */
+        /** @var MockObject|ResponseFactoryInterface $factory */
         $factory = $this->getMockBuilder(ResponseFactoryInterface::class)
             ->getMockForAbstractClass();
 
@@ -171,11 +172,32 @@ class ErrorHandlerTest extends TestCase
     }
 
     /**
+     * @throws ErrorException
+     */
+    public function testHandleErrorWhenLevelIsNotSupported(): void
+    {
+        /** @var MockObject|ResponseFactoryInterface $factory */
+        $factory = $this->getMockBuilder(ResponseFactoryInterface::class)
+            ->getMockForAbstractClass();
+
+        /* @var Mockery\Mock|ErrorHandler $errorHandler */
+        $errorHandler = new ErrorHandler($factory, HandlerProviderNegotiator::class);
+
+        /** @var Mockery\Mock|SystemFacade $system */
+        $system = Mockery::mock(SystemFacade::class)->makePartial();
+        $system->shouldReceive('getErrorReportingLevel')->andReturn(0);
+
+        $this->setProperties($errorHandler, ['system' => $system]);
+
+        $this->assertFalse($errorHandler->handleError(0, 'test'));
+    }
+
+    /**
      * @runInSeparateProcess
      */
     public function testHandleShutdown(): void
     {
-        /** @var \PHPUnit\Framework\MockObject\MockObject|ResponseFactoryInterface $factory */
+        /** @var MockObject|ResponseFactoryInterface $factory */
         $factory = $this->getMockBuilder(ResponseFactoryInterface::class)
             ->getMockForAbstractClass();
 
@@ -208,15 +230,7 @@ class ErrorHandlerTest extends TestCase
         $run->shouldReceive('sendHttpCode')->andReturn(500);
         $run->shouldReceive('getHandlers')->andReturn([$handler]);
 
-        $errorHandlerReflection = new ReflectionObject($errorHandler);
-        $systemProp = $errorHandlerReflection->getProperty('system');
-        $systemProp->setAccessible(true);
-
-        $whoopsProp = $errorHandlerReflection->getProperty('whoops');
-        $whoopsProp->setAccessible(true);
-
-        $systemProp->setValue($errorHandler, $system);
-        $whoopsProp->setValue($errorHandler, $run);
+        $this->setProperties($errorHandler, ['system' => $system, 'whoops' => $run]);
 
         $errorHandler->handleShutdown();
 
@@ -302,5 +316,16 @@ class ErrorHandlerTest extends TestCase
             $responseFactory->allows()->createResponse()->withAnyArgs()->andReturns($return);
         }
         return $responseFactory;
+    }
+
+    private function setProperties(object $object, array $props)
+    {
+        $reflection = new ReflectionObject($object);
+
+        foreach ($props as $name => $value) {
+            $prop = $reflection->getProperty($name);
+            $prop->setAccessible(true);
+            $prop->setValue($object, $value);
+        }
     }
 }
