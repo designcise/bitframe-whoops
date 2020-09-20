@@ -24,6 +24,7 @@ use function is_a;
 use function array_reverse;
 use function in_array;
 use function method_exists;
+use function http_response_code;
 
 class ErrorHandler implements MiddlewareInterface
 {
