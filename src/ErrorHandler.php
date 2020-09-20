@@ -157,7 +157,7 @@ class ErrorHandler implements MiddlewareInterface
 
         if ($this->whoops->writeToOutput()) {
             if (Misc::canSendHeaders() && $handlerContentType) {
-                header("Content-Type: {$handlerContentType}");
+                header("Content-Type: {$handlerContentType}", true, $this->getStatusCode());
             }
 
             $this->writeToOutputNow($output);

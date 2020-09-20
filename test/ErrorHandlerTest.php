@@ -293,7 +293,7 @@ namespace BitFrame\Whoops\Test {
 
             $errorHandler->handleException(new InvalidArgumentException('foobar'));
 
-            $this->expectOutputString('200 Content-Type: application/json');
+            $this->expectOutputString('500 Content-Type: application/json');
         }
 
         public function testGetOptions(): void
