@@ -15,7 +15,7 @@ use Whoops\Handler\HandlerInterface;
 
 abstract class AbstractProvider
 {
-    private ServerRequestInterface $request;
+    protected ServerRequestInterface $request;
 
     public function __construct(ServerRequestInterface $request)
     {
