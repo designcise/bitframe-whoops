@@ -36,6 +36,8 @@ class ErrorHandler implements MiddlewareInterface
 
     private string $handlerProvider;
 
+    private array $handlerProviderArgs;
+
     private array $options;
 
     private bool $catchGlobalErrors;
@@ -54,10 +56,12 @@ class ErrorHandler implements MiddlewareInterface
     public function __construct(
         ResponseFactoryInterface $responseFactory,
         string $handlerProvider = HandlerProviderNegotiator::class,
+        array $handlerProviderArgs = [],
         array $options = []
     ) {
         $this->responseFactory = $responseFactory;
         $this->handlerProvider = $handlerProvider;
+        $this->handlerProviderArgs = $handlerProviderArgs;
 
         if (! is_a($this->handlerProvider, AbstractProvider::class, true)) {
             throw new InvalidArgumentException(
@@ -79,7 +83,7 @@ class ErrorHandler implements MiddlewareInterface
         ServerRequestInterface $request,
         RequestHandlerInterface $handler
     ): ResponseInterface {
-        $handlerProvider = new $this->handlerProvider($request);
+        $handlerProvider = new $this->handlerProvider($request, ...$this->handlerProviderArgs);
         $errorHandler = $handlerProvider->getHandler();
 
         $this->applyOptions($errorHandler);
