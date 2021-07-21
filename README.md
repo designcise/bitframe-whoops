@@ -1,7 +1,7 @@
 # BitFrame\Whoops
 
 [![codecov](https://codecov.io/gh/designcise/bitframe-whoops/branch/master/graph/badge.svg)](https://codecov.io/gh/designcise/bitframe-whoops)
-[![Build Status](https://travis-ci.org/designcise/bitframe-whoops.svg?branch=master)](https://travis-ci.org/designcise/bitframe-whoops)
+[![Build Status](https://travis-ci.com/designcise/bitframe-whoops.svg?branch=master)](https://travis-ci.org/designcise/bitframe-whoops)
 
 Whoops error handler middleware to handle application or middleware specific errors.
 
