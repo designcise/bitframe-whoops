@@ -11,7 +11,7 @@ Whoops error handler middleware to handle application or middleware specific err
 $ composer require "designcise/bitframe-whoops"
 ```
 
-Please note that this package requires PHP 7.4.0 or newer.
+Please note that this package requires PHP 8.0 or newer.
 
 ## Quickstart
 
@@ -114,7 +114,7 @@ To run the tests you can use the following commands:
 
 ## Documentation
 
-Complete documentation for v2.0 will be available soon.
+Complete documentation for v3 will be available soon.
 
 ## License
 
