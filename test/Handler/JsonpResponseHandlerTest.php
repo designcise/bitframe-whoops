@@ -4,7 +4,7 @@
  * BitFrame Framework (https://www.bitframephp.com)
  *
  * @author    Daniyal Hamid
- * @copyright Copyright (c) 2017-2020 Daniyal Hamid (https://designcise.com)
+ * @copyright Copyright (c) 2017-2021 Daniyal Hamid (https://designcise.com)
  * @license   https://bitframephp.com/about/license MIT License
  */
 
@@ -150,7 +150,7 @@ class JsonpResponseHandlerTest extends TestCase
      *
      * @param mixed $callbackName
      */
-    public function testThrowsExceptionWhenCallbackIsInvalid($callbackName): void
+    public function testThrowsExceptionWhenCallbackIsInvalid(mixed $callbackName): void
     {
         $this->expectException(InvalidArgumentException::class);
         new JsonpResponseHandler($callbackName);
@@ -176,15 +176,17 @@ class JsonpResponseHandlerTest extends TestCase
      * @dataProvider valuesToJsonEncodeProvider
      *
      * @param string $value
+     *
+     * @throws \JsonException
      */
-    public function testUsesSaneDefaultJsonEncodingFlags($value): void
+    public function testUsesSaneDefaultJsonEncodingFlags(string $value): void
     {
         $defaultFlags = JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP | JSON_UNESCAPED_SLASHES;
         $handler = new JsonpResponseHandler(self::CALLBACK);
         $handler->setEncoding($defaultFlags);
         $this->whoops->pushHandler($handler);
 
-        $expected = json_encode($value, $defaultFlags);
+        $expected = json_encode($value, JSON_THROW_ON_ERROR | $defaultFlags);
 
         try {
             throw new RuntimeException($value);
@@ -206,6 +208,13 @@ class JsonpResponseHandlerTest extends TestCase
         }
     }
 
+    /**
+     * @param string $jsonp
+     *
+     * @return array
+     *
+     * @throws \JsonException
+     */
     private function decodeJsonp(string $jsonp): array
     {
         $callback = '';
@@ -219,6 +228,6 @@ class JsonpResponseHandlerTest extends TestCase
         $jsonp = trim($jsonp);
         $jsonp = trim($jsonp,'()');
 
-        return [$callback => json_decode($jsonp, true) ?: []];
+        return [$callback => json_decode($jsonp, true, 512, JSON_THROW_ON_ERROR) ?: []];
     }
 }

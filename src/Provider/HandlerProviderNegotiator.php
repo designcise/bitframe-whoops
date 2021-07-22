@@ -4,7 +4,7 @@
  * BitFrame Framework (https://www.bitframephp.com)
  *
  * @author    Daniyal Hamid
- * @copyright Copyright (c) 2017-2020 Daniyal Hamid (https://designcise.com)
+ * @copyright Copyright (c) 2017-2021 Daniyal Hamid (https://designcise.com)
  * @license   https://bitframephp.com/about/license MIT License
  */
 
@@ -106,7 +106,7 @@ class HandlerProviderNegotiator implements ProviderInterface
         foreach ($this->handlerProviders as $handlerProvider) {
             foreach ($handlerProvider::MIMES as $value) {
                 $score[$handlerProvider] = $score[$handlerProvider] ?? 0;
-                $score[$handlerProvider] += (int) (strpos($acceptType, $value) !== false);
+                $score[$handlerProvider] += (int) (str_contains($acceptType, $value));
             }
         }
         return $score;

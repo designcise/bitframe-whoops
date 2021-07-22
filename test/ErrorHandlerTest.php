@@ -4,7 +4,7 @@
  * BitFrame Framework (https://www.bitframephp.com)
  *
  * @author    Daniyal Hamid
- * @copyright Copyright (c) 2017-2020 Daniyal Hamid (https://designcise.com)
+ * @copyright Copyright (c) 2017-2021 Daniyal Hamid (https://designcise.com)
  * @license   https://bitframephp.com/about/license MIT License
  */
 
@@ -367,7 +367,7 @@ namespace BitFrame\Whoops\Test {
          *
          * @return Mockery\Mock|ResponseFactoryInterface
          */
-        protected function getMockedResponseFactory($return)
+        protected function getMockedResponseFactory(mixed $return)
         {
             /** @var Mockery\Mock|ResponseFactoryInterface $responseFactory */
             $responseFactory = Mockery::mock(ResponseFactoryInterface::class)->makePartial();

@@ -4,7 +4,7 @@
  * BitFrame Framework (https://www.bitframephp.com)
  *
  * @author    Daniyal Hamid
- * @copyright Copyright (c) 2017-2020 Daniyal Hamid (https://designcise.com)
+ * @copyright Copyright (c) 2017-2021 Daniyal Hamid (https://designcise.com)
  * @license   https://bitframephp.com/about/license MIT License
  */
 
@@ -57,7 +57,7 @@ class JsonpResponseHandler extends Handler
 
     public function __construct(
         string $callback,
-        int $encodingOptions = self::DEFAULT_ENCODING
+        int $encodingOptions = self::DEFAULT_ENCODING,
     ) {
         if (! $this->isCallbackValid($callback)) {
             throw new InvalidArgumentException('Callback name is invalid');

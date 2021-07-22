@@ -4,7 +4,7 @@
  * BitFrame Framework (https://www.bitframephp.com)
  *
  * @author    Daniyal Hamid
- * @copyright Copyright (c) 2017-2020 Daniyal Hamid (https://designcise.com)
+ * @copyright Copyright (c) 2017-2021 Daniyal Hamid (https://designcise.com)
  * @license   https://bitframephp.com/about/license MIT License
  */
 
@@ -13,6 +13,7 @@ declare(strict_types=1);
 namespace BitFrame\Test\Http;
 
 use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\MockObject\MockObject;
 use Psr\Http\Message\ServerRequestInterface;
 use Whoops\Handler\{HandlerInterface, Handler};
 use BitFrame\Whoops\Provider\{
@@ -52,7 +53,7 @@ class HandlerProviderNegotiatorTest extends TestCase
      */
     public function testAddNewOrUpdateExistingHandlerProvider(string $handlerProvider): void
     {
-        /** @var \PHPUnit\Framework\MockObject\MockObject|ServerRequestInterface $request */
+        /** @var MockObject|ServerRequestInterface $request */
         $request = $this->getMockBuilder(ServerRequestInterface::class)
             ->onlyMethods(['getHeader'])
             ->getMockForAbstractClass();
@@ -78,11 +79,7 @@ class HandlerProviderNegotiatorTest extends TestCase
     public function testAddNewInvalidProviderShouldThrowException(): void
     {
         $invalidProvider = new class {};
-
-        /** @var ServerRequestInterface $request */
-        $request = $this->getMockBuilder(ServerRequestInterface::class)
-            ->getMockForAbstractClass();
-        $negotiator = new HandlerProviderNegotiator($request);
+        $negotiator = new HandlerProviderNegotiator();
 
         $this->expectException(InvalidArgumentException::class);
 
@@ -117,7 +114,7 @@ class HandlerProviderNegotiatorTest extends TestCase
      */
     public function testGetPreferredProvider(string $mime, string $expectedProvider): void
     {
-        /** @var \PHPUnit\Framework\MockObject\MockObject|ServerRequestInterface $request */
+        /** @var MockObject|ServerRequestInterface $request */
         $request = $this->getMockBuilder(ServerRequestInterface::class)
             ->onlyMethods(['getHeader'])
             ->getMockForAbstractClass();
@@ -134,7 +131,7 @@ class HandlerProviderNegotiatorTest extends TestCase
 
     public function testGetsDefaultProviderWhenAcceptHeaderNotPresent(): void
     {
-        /** @var \PHPUnit\Framework\MockObject\MockObject|ServerRequestInterface $request */
+        /** @var MockObject|ServerRequestInterface $request */
         $request = $this->getMockBuilder(ServerRequestInterface::class)
             ->onlyMethods(['getHeader'])
             ->getMockForAbstractClass();
@@ -154,7 +151,7 @@ class HandlerProviderNegotiatorTest extends TestCase
 
     public function testGetsCachedProviderOnRepeatCalls(): void
     {
-        /** @var \PHPUnit\Framework\MockObject\MockObject|ServerRequestInterface $request */
+        /** @var MockObject|ServerRequestInterface $request */
         $request = $this->getMockBuilder(ServerRequestInterface::class)
             ->onlyMethods(['getHeader'])
             ->getMockForAbstractClass();
@@ -179,7 +176,7 @@ class HandlerProviderNegotiatorTest extends TestCase
             public function getHandler(ServerRequestInterface $request): HandlerInterface
             {
                 return new class extends Handler {
-                    public function handle()
+                    public function handle(): void
                     {
                         $exception = $this->getException();
                         $message = sprintf(
@@ -195,9 +192,8 @@ class HandlerProviderNegotiatorTest extends TestCase
                 };
             }
 
-            public function getPreferredContentType(
-                ServerRequestInterface $request
-            ): string {
+            public function getPreferredContentType(ServerRequestInterface $request): string
+            {
                 return self::MIMES[0];
             }
         };

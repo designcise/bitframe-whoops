@@ -4,7 +4,7 @@
  * BitFrame Framework (https://www.bitframephp.com)
  *
  * @author    Daniyal Hamid
- * @copyright Copyright (c) 2017-2020 Daniyal Hamid (https://designcise.com)
+ * @copyright Copyright (c) 2017-2021 Daniyal Hamid (https://designcise.com)
  * @license   https://bitframephp.com/about/license MIT License
  */
 
@@ -13,6 +13,7 @@ declare(strict_types=1);
 namespace BitFrame\Whoops\Test\Provider;
 
 use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\MockObject\MockObject;
 use Psr\Http\Message\ServerRequestInterface;
 use Whoops\Handler\HandlerInterface;
 use BitFrame\Whoops\Provider\TextHandlerProvider;
@@ -22,8 +23,7 @@ use BitFrame\Whoops\Provider\TextHandlerProvider;
  */
 class TextHandlerProviderTest extends TestCase
 {
-    /** @var \PHPUnit\Framework\MockObject\MockObject|ServerRequestInterface */
-    private $request;
+    private MockObject|ServerRequestInterface $request;
 
     public function setUp(): void
     {

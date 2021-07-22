@@ -4,7 +4,7 @@
  * BitFrame Framework (https://www.bitframephp.com)
  *
  * @author    Daniyal Hamid
- * @copyright Copyright (c) 2017-2020 Daniyal Hamid (https://designcise.com)
+ * @copyright Copyright (c) 2017-2021 Daniyal Hamid (https://designcise.com)
  * @license   https://bitframephp.com/about/license MIT License
  */
 
@@ -13,8 +13,9 @@ declare(strict_types=1);
 namespace BitFrame\Whoops\Test\Provider;
 
 use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\MockObject\MockObject;
 use Psr\Http\Message\ServerRequestInterface;
-use Whoops\Handler\HandlerInterface;
+use Whoops\Handler\{HandlerInterface, PrettyPageHandler};
 use BitFrame\Whoops\Provider\HtmlHandlerProvider;
 
 /**
@@ -24,7 +25,7 @@ class HtmlHandlerProviderTest extends TestCase
 {
     public function testGetHandler(): void
     {
-        /** @var \PHPUnit\Framework\MockObject\MockObject|ServerRequestInterface $request */
+        /** @var MockObject|ServerRequestInterface $request */
         $request = $this->getMockBuilder(ServerRequestInterface::class)
             ->onlyMethods([
                 'getMethod',
@@ -48,7 +49,7 @@ class HtmlHandlerProviderTest extends TestCase
         $request->method('getParsedBody')->willReturn([]);
 
         $handlerProvider = new HtmlHandlerProvider();
-        /** @var \Whoops\Handler\PrettyPageHandler $handler */
+        /** @var PrettyPageHandler $handler */
         $handler = $handlerProvider->getHandler($request);
 
         $this->assertInstanceOf(HandlerInterface::class, $handler);
@@ -66,7 +67,7 @@ class HtmlHandlerProviderTest extends TestCase
 
     public function testGetPreferredContentType(): void
     {
-        /** @var \PHPUnit\Framework\MockObject\MockObject|ServerRequestInterface $request */
+        /** @var MockObject|ServerRequestInterface $request */
         $request = $this->getMockBuilder(ServerRequestInterface::class)
             ->getMock();
 

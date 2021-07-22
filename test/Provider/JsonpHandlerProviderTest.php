@@ -4,7 +4,7 @@
  * BitFrame Framework (https://www.bitframephp.com)
  *
  * @author    Daniyal Hamid
- * @copyright Copyright (c) 2017-2020 Daniyal Hamid (https://designcise.com)
+ * @copyright Copyright (c) 2017-2021 Daniyal Hamid (https://designcise.com)
  * @license   https://bitframephp.com/about/license MIT License
  */
 
@@ -13,6 +13,7 @@ declare(strict_types=1);
 namespace BitFrame\Whoops\Test\Provider;
 
 use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\MockObject\MockObject;
 use Psr\Http\Message\ServerRequestInterface;
 use Whoops\Handler\HandlerInterface;
 use BitFrame\Whoops\Provider\JsonpHandlerProvider;
@@ -51,7 +52,7 @@ class JsonpHandlerProviderTest extends TestCase
      */
     public function testNonGetOrHeadMethodRequestShouldThrowException(
         string $method,
-        array $query
+        array $query,
     ): void {
         $handlerProvider = new JsonpHandlerProvider();
 
@@ -78,14 +79,10 @@ class JsonpHandlerProviderTest extends TestCase
         );
     }
 
-    /**
-     * @param string $method
-     * @param array $query
-     *
-     * @return \PHPUnit\Framework\MockObject\MockObject|ServerRequestInterface
-     */
-    private function getRequest(string $method = 'GET', array $query = ['callback' => 'foo'])
-    {
+    private function getRequest(
+        string $method = 'GET',
+        array $query = ['callback' => 'foo'],
+    ): MockObject|ServerRequestInterface {
         $request = $this->getMockBuilder(ServerRequestInterface::class)
             ->onlyMethods(['getMethod', 'getQueryParams'])
             ->getMockForAbstractClass();
