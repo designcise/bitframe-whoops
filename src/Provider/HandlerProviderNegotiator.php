@@ -14,8 +14,8 @@ namespace BitFrame\Whoops\Provider;
 
 use Psr\Http\Message\ServerRequestInterface;
 use InvalidArgumentException;
-
 use Whoops\Handler\HandlerInterface;
+
 use function is_a;
 use function asort;
 use function array_key_last;
