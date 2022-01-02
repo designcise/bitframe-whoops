@@ -19,7 +19,7 @@ use Whoops\Handler\HandlerInterface;
 use function is_a;
 use function asort;
 use function array_key_last;
-use function strpos;
+use function str_contains;
 
 /**
  * Detect any of the supported preferred formats from an
