@@ -28,19 +28,19 @@ use function str_contains;
 class HandlerProviderNegotiator implements ProviderInterface
 {
     /** @var string */
-    public const HTML = 'html';
+    final public const HTML = 'html';
 
     /** @var string */
-    public const JSON = 'json';
+    final public const JSON = 'json';
 
     /** @var string */
-    public const JSONP = 'jsonp';
+    final public const JSONP = 'jsonp';
 
     /** @var string */
-    public const TEXT = 'text';
+    final public const TEXT = 'text';
 
     /** @var string */
-    public const XML = 'xml';
+    final public const XML = 'xml';
 
     private array $handlerProviders = [
         self::HTML => HtmlHandlerProvider::class,
