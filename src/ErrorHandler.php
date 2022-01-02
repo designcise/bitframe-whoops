@@ -31,7 +31,7 @@ class ErrorHandler implements MiddlewareInterface
     use HandlerOptionsAwareTrait;
 
     /** @var int */
-    final private const STATUS_INTERNAL_SERVER_ERROR = 500;
+    private const STATUS_INTERNAL_SERVER_ERROR = 500;
 
     private SystemFacade $system;
 
