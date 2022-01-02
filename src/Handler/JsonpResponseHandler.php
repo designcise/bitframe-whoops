@@ -66,9 +66,6 @@ class JsonpResponseHandler extends Handler
         return $this;
     }
 
-    /**
-     * @return int
-     */
     public function handle(): int
     {
         $error = Formatter::formatExceptionAsDataArray(
