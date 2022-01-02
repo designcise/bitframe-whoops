@@ -45,7 +45,7 @@ For example, to handle middleware-specific errors with `BitFrame\App` (or other 
 use BitFrame\App;
 use BitFrame\Emitter\SapiEmitter;
 use BitFrame\Whoops\ErrorHandler;
-use \BitFrame\Whoops\Provider\HandlerProviderNegotiator;
+use BitFrame\Whoops\Provider\HandlerProviderNegotiator;
 use BitFrame\Factory\HttpFactory;
 
 $app = new App();
