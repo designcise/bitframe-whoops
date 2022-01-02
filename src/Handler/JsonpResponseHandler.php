@@ -51,20 +51,13 @@ class JsonpResponseHandler extends Handler
 
     private bool $jsonApi = false;
 
-    private string $callback;
-
-    private int $encodingOptions;
-
     public function __construct(
-        string $callback,
-        int $encodingOptions = self::DEFAULT_ENCODING,
+        private string $callback,
+        private int $encodingOptions = self::DEFAULT_ENCODING,
     ) {
         if (! $this->isCallbackValid($callback)) {
             throw new InvalidArgumentException('Callback name is invalid');
         }
-
-        $this->callback = $callback;
-        $this->encodingOptions = $encodingOptions;
     }
 
     public function addTraceToOutput(bool $returnFrames): self
