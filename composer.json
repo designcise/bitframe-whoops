@@ -10,8 +10,8 @@
         }
     ],
     "require": {
-        "php": ">=8.0",
-        "filp/whoops": "~2.7",
+        "php": ">=8.1",
+        "filp/whoops": "~2.14",
         "psr/http-factory": "~1.0",
         "psr/http-server-handler": "~1.0",
         "psr/http-server-middleware": "~1.0"

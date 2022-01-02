@@ -11,7 +11,7 @@ Whoops error handler middleware to handle application or middleware specific err
 $ composer require "designcise/bitframe-whoops"
 ```
 
-Please note that this package requires PHP 8.0 or newer.
+Please note that this package requires PHP 8.1.0 or newer.
 
 ## Quickstart
 
@@ -45,7 +45,7 @@ For example, to handle middleware-specific errors with `BitFrame\App` (or other 
 use BitFrame\App;
 use BitFrame\Emitter\SapiEmitter;
 use BitFrame\Whoops\ErrorHandler;
-use \BitFrame\Whoops\Provider\HandlerProviderNegotiator;
+use BitFrame\Whoops\Provider\HandlerProviderNegotiator;
 use BitFrame\Factory\HttpFactory;
 
 $app = new App();

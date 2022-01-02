@@ -4,7 +4,7 @@
  * BitFrame Framework (https://www.bitframephp.com)
  *
  * @author    Daniyal Hamid
- * @copyright Copyright (c) 2017-2021 Daniyal Hamid (https://designcise.com)
+ * @copyright Copyright (c) 2017-2022 Daniyal Hamid (https://designcise.com)
  * @license   https://bitframephp.com/about/license MIT License
  */
 
@@ -19,7 +19,7 @@ use Whoops\Handler\HandlerInterface;
 use function is_a;
 use function asort;
 use function array_key_last;
-use function strpos;
+use function str_contains;
 
 /**
  * Detect any of the supported preferred formats from an
@@ -28,19 +28,19 @@ use function strpos;
 class HandlerProviderNegotiator implements ProviderInterface
 {
     /** @var string */
-    public const HTML = 'html';
+    final public const HTML = 'html';
 
     /** @var string */
-    public const JSON = 'json';
+    final public const JSON = 'json';
 
     /** @var string */
-    public const JSONP = 'jsonp';
+    final public const JSONP = 'jsonp';
 
     /** @var string */
-    public const TEXT = 'text';
+    final public const TEXT = 'text';
 
     /** @var string */
-    public const XML = 'xml';
+    final public const XML = 'xml';
 
     private array $handlerProviders = [
         self::HTML => HtmlHandlerProvider::class,
