@@ -54,11 +54,6 @@ class ErrorHandler implements MiddlewareInterface
         );
     }
 
-    /**
-     * @param ResponseFactoryInterface $responseFactory
-     * @param string|ProviderInterface $handlerProvider
-     * @param array $options
-     */
     public function __construct(
         private ResponseFactoryInterface $responseFactory,
         private ProviderInterface|string $handlerProvider = HandlerProviderNegotiator::class,
