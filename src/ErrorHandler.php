@@ -31,16 +31,11 @@ class ErrorHandler implements MiddlewareInterface
     use HandlerOptionsAwareTrait;
 
     /** @var int */
-    private const STATUS_INTERNAL_SERVER_ERROR = 500;
+    final private const STATUS_INTERNAL_SERVER_ERROR = 500;
 
     private SystemFacade $system;
 
     private RunInterface $whoops;
-
-    private ResponseFactoryInterface $responseFactory;
-
-    /** @var ProviderInterface|string */
-    private $handlerProvider;
 
     private array $options;
 
@@ -50,7 +45,7 @@ class ErrorHandler implements MiddlewareInterface
 
     public static function fromNegotiator(
         ResponseFactoryInterface $responseFactory,
-        array $options = []
+        array $options = [],
     ): self {
         return new self(
             $responseFactory,
@@ -65,13 +60,10 @@ class ErrorHandler implements MiddlewareInterface
      * @param array $options
      */
     public function __construct(
-        ResponseFactoryInterface $responseFactory,
-        $handlerProvider = HandlerProviderNegotiator::class,
-        array $options = []
+        private ResponseFactoryInterface $responseFactory,
+        private ProviderInterface|string $handlerProvider = HandlerProviderNegotiator::class,
+        array $options = [],
     ) {
-        $this->responseFactory = $responseFactory;
-        $this->handlerProvider = $handlerProvider;
-
         if (! is_a($this->handlerProvider, ProviderInterface::class, true)) {
             throw new InvalidArgumentException(
                 'Handler provider must be instance of ' . ProviderInterface::class
@@ -91,7 +83,7 @@ class ErrorHandler implements MiddlewareInterface
      */
     public function process(
         ServerRequestInterface $request,
-        RequestHandlerInterface $handler
+        RequestHandlerInterface $handler,
     ): ResponseInterface {
         $this->whoops->allowQuit(false);
         $this->whoops->writeToOutput($this->catchGlobalErrors);
@@ -131,7 +123,6 @@ class ErrorHandler implements MiddlewareInterface
 
         $this->system->startOutputBuffering();
 
-        $handlerResponse = null;
         $handlerContentType = null;
         $handlerStack = array_reverse($this->whoops->getHandlers());
 
@@ -147,7 +138,7 @@ class ErrorHandler implements MiddlewareInterface
                     ? $handler->contentType()
                     : null;
 
-                if (in_array($handlerResponse, [Handler::LAST_HANDLER, Handler::QUIT])) {
+                if (in_array($handlerResponse, [Handler::LAST_HANDLER, Handler::QUIT], true)) {
                     break;
                 }
             }
@@ -156,7 +147,7 @@ class ErrorHandler implements MiddlewareInterface
         }
 
         if ($this->whoops->writeToOutput()) {
-            if (Misc::canSendHeaders() && $handlerContentType) {
+            if ($handlerContentType && Misc::canSendHeaders()) {
                 header("Content-Type: {$handlerContentType}", true, $this->getStatusCode());
             }
 
