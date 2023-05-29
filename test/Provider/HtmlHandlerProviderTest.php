@@ -12,11 +12,14 @@ declare(strict_types=1);
 
 namespace BitFrame\Whoops\Test\Provider;
 
+use Mockery;
+use Mockery\Mock;
 use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\MockObject\MockObject;
 use Psr\Http\Message\ServerRequestInterface;
 use Whoops\Handler\{HandlerInterface, PrettyPageHandler};
 use BitFrame\Whoops\Provider\HtmlHandlerProvider;
+use Psr\Http\Message\UriInterface;
 
 /**
  * @covers \BitFrame\Whoops\Provider\HtmlHandlerProvider
@@ -39,8 +42,17 @@ class HtmlHandlerProviderTest extends TestCase
             ])
             ->getMockForAbstractClass();
 
+        /** @var MockObject|ServerRequestInterface $request */
+        $uri = $this->getMockBuilder(UriInterface::class)
+            ->onlyMethods(['__toString'])
+            ->getMockForAbstractClass();
+
+        $uri
+            ->method('__toString')
+            ->willReturn('https://bitframephp.com');
+
         $request->method('getMethod')->willReturn('GET');
-        $request->method('getUri')->willReturn('https://bitframephp.com');
+        $request->method('getUri')->willReturn($uri);
         $request->method('getServerParams')->willReturn(['SCRIPT_NAME' => 'hello world']);
         $request->method('getHeaders')->willReturn(['test' => '1234']);
         $request->method('getCookieParams')->willReturn([]);
