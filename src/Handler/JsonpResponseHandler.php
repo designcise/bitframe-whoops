@@ -52,7 +52,7 @@ class JsonpResponseHandler extends Handler
     private bool $jsonApi = false;
 
     public function __construct(
-        private string $callback,
+        private readonly string $callback,
         private int $encodingOptions = self::DEFAULT_ENCODING,
     ) {
         if (! $this->isCallbackValid($callback)) {
