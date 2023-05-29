@@ -37,8 +37,6 @@ class ErrorHandler implements MiddlewareInterface
 
     private RunInterface $whoops;
 
-    private array $options;
-
     private bool $catchGlobalErrors;
 
     private bool $canThrowExceptions = true;
@@ -55,9 +53,9 @@ class ErrorHandler implements MiddlewareInterface
     }
 
     public function __construct(
-        private ResponseFactoryInterface $responseFactory,
-        private ProviderInterface|string $handlerProvider = HandlerProviderNegotiator::class,
-        array $options = [],
+        private readonly ResponseFactoryInterface $responseFactory,
+        private readonly ProviderInterface|string $handlerProvider = HandlerProviderNegotiator::class,
+        private readonly array $options = [],
     ) {
         if (! is_a($this->handlerProvider, ProviderInterface::class, true)) {
             throw new InvalidArgumentException(
@@ -65,7 +63,6 @@ class ErrorHandler implements MiddlewareInterface
             );
         }
 
-        $this->options = $options;
         $this->catchGlobalErrors = $options['catchGlobalErrors'] ?? false;
         unset($options['catchGlobalErrors']);
 
