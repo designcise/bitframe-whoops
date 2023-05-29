@@ -1,7 +1,8 @@
 # BitFrame\Whoops
 
-[![codecov](https://codecov.io/gh/designcise/bitframe-whoops/branch/master/graph/badge.svg)](https://codecov.io/gh/designcise/bitframe-whoops)
-[![Build Status](https://travis-ci.com/designcise/bitframe-whoops.svg?branch=master)](https://travis-ci.com/designcise/bitframe-whoops)
+[![CI](https://github.com/designcise/bitframe-whoops/actions/workflows/ci.yml/badge.svg)](https://github.com/designcise/bitframe-whoops/actions/workflows/ci.yml)
+[![Maintainability](https://api.codeclimate.com/v1/badges/1a7ef1d3db6876f86eb5/maintainability)](https://codeclimate.com/github/designcise/bitframe-whoops/maintainability)
+[![Test Coverage](https://api.codeclimate.com/v1/badges/1a7ef1d3db6876f86eb5/test_coverage)](https://codeclimate.com/github/designcise/bitframe-whoops/test_coverage)
 
 Whoops error handler middleware to handle application or middleware specific errors.
 
@@ -11,7 +12,7 @@ Whoops error handler middleware to handle application or middleware specific err
 $ composer require "designcise/bitframe-whoops"
 ```
 
-Please note that this package requires PHP 8.1.0 or newer.
+Please note that this package requires PHP 8.2.0 or newer.
 
 ## Quickstart
 
@@ -21,9 +22,9 @@ The constructor has the following signature:
 
 ```php
 new ErrorHandler(
-    \Psr\Http\Message\ResponseFactoryInterface,
-    \BitFrame\Whoops\Provider\HandlerProviderNegotiator::class
-    [options]
+    ResponseFactoryInterface,
+    HandlerProviderNegotiator::class,
+    [options],
 );
 ```
 
@@ -88,7 +89,7 @@ throw new \Exception('hello world!');
 
 ### How Does It Work?
 
-The error handler middleware automatically determines the error handler to use based on the `Accept` header. The following error handler provders are included:
+The error handler middleware automatically determines the error handler to use based on the `Accept` header. The following error handler providers are included:
 
 1. `BitFrame\Whoops\Provider\HtmlHandlerProvider` for `Whoops\Handler\PrettyPageHandler`;
 1. `BitFrame\Whoops\Provider\JsonHandlerProvider` for `Whoops\Handler\JsonResponseHandler`;
