@@ -330,7 +330,7 @@ namespace BitFrame\Whoops\Test {
                     $phpunit->assertSame($expectedError['type'], $error['type']);
                     $phpunit->assertSame($expectedError['message'], $error['message']);
 
-                    return $stream;
+                    return strlen((string) $stream);
                 }
             );
 
