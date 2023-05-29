@@ -12,6 +12,7 @@ declare(strict_types=1);
 
 namespace BitFrame\Whoops\Provider;
 
+use BitFrame\Whoops\Enum\HandlerProviderType;
 use Psr\Http\Message\ServerRequestInterface;
 use InvalidArgumentException;
 use Whoops\Handler\HandlerInterface;
@@ -27,27 +28,12 @@ use function str_contains;
  */
 class HandlerProviderNegotiator implements ProviderInterface
 {
-    /** @var string */
-    final public const HTML = 'html';
-
-    /** @var string */
-    final public const JSON = 'json';
-
-    /** @var string */
-    final public const JSONP = 'jsonp';
-
-    /** @var string */
-    final public const TEXT = 'text';
-
-    /** @var string */
-    final public const XML = 'xml';
-
     private array $handlerProviders = [
-        self::HTML => HtmlHandlerProvider::class,
-        self::JSON => JsonHandlerProvider::class,
-        self::JSONP => JsonpHandlerProvider::class,
-        self::TEXT => TextHandlerProvider::class,
-        self::XML => XmlHandlerProvider::class,
+        HandlerProviderType::HTML => HtmlHandlerProvider::class,
+        HandlerProviderType::JSON => JsonHandlerProvider::class,
+        HandlerProviderType::JSONP => JsonpHandlerProvider::class,
+        HandlerProviderType::TEXT => TextHandlerProvider::class,
+        HandlerProviderType::XML => XmlHandlerProvider::class,
     ];
 
     private ?ProviderInterface $activeProvider = null;
