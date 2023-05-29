@@ -66,7 +66,7 @@ class HandlerProviderNegotiator implements ProviderInterface
         }
 
         $acceptTypes = $request->getHeader('accept');
-        $default = $this->handlerProviders[self::HTML];
+        $default = $this->handlerProviders[HandlerProviderType::HTML];
 
         if (! isset($acceptTypes[0])) {
             $this->activeProvider = new $default($request);
