@@ -4,7 +4,7 @@
  * BitFrame Framework (https://www.bitframephp.com)
  *
  * @author    Daniyal Hamid
- * @copyright Copyright (c) 2017-2022 Daniyal Hamid (https://designcise.com)
+ * @copyright Copyright (c) 2017-2023 Daniyal Hamid (https://designcise.com)
  * @license   https://bitframephp.com/about/license MIT License
  */
 
@@ -52,7 +52,7 @@ class JsonpResponseHandler extends Handler
     private bool $jsonApi = false;
 
     public function __construct(
-        private string $callback,
+        private readonly string $callback,
         private int $encodingOptions = self::DEFAULT_ENCODING,
     ) {
         if (! $this->isCallbackValid($callback)) {

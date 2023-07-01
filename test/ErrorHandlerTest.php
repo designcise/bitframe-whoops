@@ -4,7 +4,7 @@
  * BitFrame Framework (https://www.bitframephp.com)
  *
  * @author    Daniyal Hamid
- * @copyright Copyright (c) 2017-2022 Daniyal Hamid (https://designcise.com)
+ * @copyright Copyright (c) 2017-2023 Daniyal Hamid (https://designcise.com)
  * @license   https://bitframephp.com/about/license MIT License
  */
 
@@ -330,7 +330,7 @@ namespace BitFrame\Whoops\Test {
                     $phpunit->assertSame($expectedError['type'], $error['type']);
                     $phpunit->assertSame($expectedError['message'], $error['message']);
 
-                    return $stream;
+                    return strlen((string) $stream);
                 }
             );
 

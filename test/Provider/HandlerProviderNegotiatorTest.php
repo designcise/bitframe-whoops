@@ -4,7 +4,7 @@
  * BitFrame Framework (https://www.bitframephp.com)
  *
  * @author    Daniyal Hamid
- * @copyright Copyright (c) 2017-2022 Daniyal Hamid (https://designcise.com)
+ * @copyright Copyright (c) 2017-2023 Daniyal Hamid (https://designcise.com)
  * @license   https://bitframephp.com/about/license MIT License
  */
 
@@ -12,6 +12,7 @@ declare(strict_types=1);
 
 namespace BitFrame\Test\Http;
 
+use BitFrame\Whoops\Enum\HandlerProviderType;
 use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\MockObject\MockObject;
 use Psr\Http\Message\ServerRequestInterface;
@@ -37,11 +38,11 @@ class HandlerProviderNegotiatorTest extends TestCase
     {
         return [
             'add new parser' => ['newHandlerProvider'],
-            'replace HtmlHandlerProvider' => [HandlerProviderNegotiator::HTML],
-            'replace JsonHandlerProvider' => [HandlerProviderNegotiator::JSON],
-            'replace JsonpHandlerProvider' => [HandlerProviderNegotiator::JSONP],
-            'replace TextHandlerProvider' => [HandlerProviderNegotiator::TEXT],
-            'replace XmlHandlerProvider' => [HandlerProviderNegotiator::XML],
+            'replace HtmlHandlerProvider' => [HandlerProviderType::HTML],
+            'replace JsonHandlerProvider' => [HandlerProviderType::JSON],
+            'replace JsonpHandlerProvider' => [HandlerProviderType::JSONP],
+            'replace TextHandlerProvider' => [HandlerProviderType::TEXT],
+            'replace XmlHandlerProvider' => [HandlerProviderType::XML],
         ];
     }
 

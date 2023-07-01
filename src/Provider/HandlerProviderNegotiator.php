@@ -4,7 +4,7 @@
  * BitFrame Framework (https://www.bitframephp.com)
  *
  * @author    Daniyal Hamid
- * @copyright Copyright (c) 2017-2022 Daniyal Hamid (https://designcise.com)
+ * @copyright Copyright (c) 2017-2023 Daniyal Hamid (https://designcise.com)
  * @license   https://bitframephp.com/about/license MIT License
  */
 
@@ -12,6 +12,7 @@ declare(strict_types=1);
 
 namespace BitFrame\Whoops\Provider;
 
+use BitFrame\Whoops\Enum\HandlerProviderType;
 use Psr\Http\Message\ServerRequestInterface;
 use InvalidArgumentException;
 use Whoops\Handler\HandlerInterface;
@@ -27,27 +28,12 @@ use function str_contains;
  */
 class HandlerProviderNegotiator implements ProviderInterface
 {
-    /** @var string */
-    final public const HTML = 'html';
-
-    /** @var string */
-    final public const JSON = 'json';
-
-    /** @var string */
-    final public const JSONP = 'jsonp';
-
-    /** @var string */
-    final public const TEXT = 'text';
-
-    /** @var string */
-    final public const XML = 'xml';
-
     private array $handlerProviders = [
-        self::HTML => HtmlHandlerProvider::class,
-        self::JSON => JsonHandlerProvider::class,
-        self::JSONP => JsonpHandlerProvider::class,
-        self::TEXT => TextHandlerProvider::class,
-        self::XML => XmlHandlerProvider::class,
+        HandlerProviderType::HTML => HtmlHandlerProvider::class,
+        HandlerProviderType::JSON => JsonHandlerProvider::class,
+        HandlerProviderType::JSONP => JsonpHandlerProvider::class,
+        HandlerProviderType::TEXT => TextHandlerProvider::class,
+        HandlerProviderType::XML => XmlHandlerProvider::class,
     ];
 
     private ?ProviderInterface $activeProvider = null;
@@ -80,7 +66,7 @@ class HandlerProviderNegotiator implements ProviderInterface
         }
 
         $acceptTypes = $request->getHeader('accept');
-        $default = $this->handlerProviders[self::HTML];
+        $default = $this->handlerProviders[HandlerProviderType::HTML];
 
         if (! isset($acceptTypes[0])) {
             $this->activeProvider = new $default($request);
